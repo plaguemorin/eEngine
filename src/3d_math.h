@@ -18,6 +18,9 @@ typedef float[2] vec2_t;
 typedef short[3] vec3s_t;
 typedef short[2] vec2s_t;
 
+typedef float[3] rgb;
+typedef float[4] rgba;
+
 /**
  * Basic VERTEX; the base of triangle
  */
@@ -37,26 +40,93 @@ typedef struct {
 #define VERTEX_OFFSET_OF_TEXTURECOORD   offsetof(vertex_t, textureCoord)
 
 /**
+ * 2D Texture
+ */
+typedef struct td_texture_t {
+	unsigned char 	* 			data;
+	unsigned int 					dataLength;
+	
+	unsigned int					width;
+	unsigned int					height;
+	unsigned int					bpp;
+	unsigned short				type;
+	
+	/* Renderer Private Data */
+	void				*			rendererData;
+} texture_t;
+
+#define TEXTURE_TYPE_RGB 		1
+#define TEXTURE_TYPE_RGBA		2
+
+/**
+ * Rendering properties
+ */
+typedef union td_properties_t {
+	unsigned char props;
+	struct {
+		char		has_bumpMapping : 1;
+		char		has_specular	: 1;
+		char		has_diffuse		: 1;
+		char		has_UNDEF1		: 1;
+		char		has_UNDEF2		: 1;
+		char		has_UNDEF3		: 1;
+		char 		has_alpha		: 1;
+		char		has_shadows		: 1;
+	};
+} props_t;
+
+/**
+ * Material is the look of an object
+ */
+typedef struct td_material_t {
+	/* Name of this material */
+	char				*			name;
+	
+	/* Material Properties */
+	props_t						properties;
+	
+	/* */
+	float							shininess;
+	
+	/* */
+	rgb								specularColor;
+	
+	/* Textures */
+	texture_t			*			texture_diffuse;
+	texture_t			*			texture_bump;
+	texture_t			*			texture_specular;
+	
+	/* Renderer Private Data */
+	void				*			rendererData;
+} material_t;
+
+/**
  * A 3D object is simply the mesh and the material to render
  * this does not have any position as many instance of this 
  * object may exist
  */
 typedef struct td_object_t {
     /* Object name this should be unique */
-    char             *        name;
+    char             	*       name;
+    
+    /* The look of this object */
+    material_t			*		material;
    
     /* Object's vertex */
-    vertex_t         *        vertices;
+    vertex_t       	*       vertices;
 
     /* Number of verticies */
     unsigned short            num_verticies;
     
     /* Indicies pointing to the verticies */
-    unsigned short  *         indices;
+    unsigned short  	*       indices;
 
     /* Number of indicies */
     unsigned short            num_indices;
     
+	/* Renderer Private Data */
+	void				*			rendererData;
+
 } object_t;
 
 #define vectorClear( a )                ((a)[0] = (a)[1] = (a)[2] = 0)
