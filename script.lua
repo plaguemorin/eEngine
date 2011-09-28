@@ -1,4 +1,5 @@
 print("I am using Lua from within C")
 
-loadModel("triangle")
+p = entity_load("triangle")
 
+print(p)

@@ -8,12 +8,16 @@
 #include "engine.h"
 #include "script.h"
 
+#include "entities.h"
+
 engine_t engine;
 
 
 engine_t * engine_init() {
 	SCRIPTING_Init(&engine);
+	ENTITY_Init(&engine);
    
+	SCRIPTING_AfterLoaded(&engine);
     return &engine;
 }
 
