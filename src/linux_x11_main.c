@@ -217,13 +217,12 @@ int main(int argc, char **argv) {
 
 		engine_update();
 
-
 		engine_drawframe();
 		glFlush();
 
-		//if (doubleBuffered) {
+		if (doubleBuffered) {
 			glXSwapBuffers(dpy, win);
-		//}
+		}
 	}
 
 	killGLWindow();

@@ -4,6 +4,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
 
 #include "engine.h" 
 #include "script.h"
@@ -168,7 +169,7 @@ static int move_entity(lua_State *L) {
         y = lua_tonumber(L, -2);
         x = lua_tonumber(L, -3);
 
-        matrixTranslate(p->transformation, x, y, z);
+        vectorSet(p->position, x, y, z);
     }
 
     return 0;
@@ -196,10 +197,7 @@ static int entity_rotate(lua_State * L) {
         y = lua_tonumber(L, -2);
         x = lua_tonumber(L, -3);
 
-        p->transformation[0] = cos(y);
-        p->transformation[1] = sin(y);
-        p->transformation[9] = -sin(y);
-        p->transformation[11] = cos(y);
+        vectorSet(p->rotation, x, y, z);
     }
 
     return 0;

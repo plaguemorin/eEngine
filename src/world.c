@@ -46,7 +46,8 @@ world_object_instance_t * WORLD_AttachObjectToWorld(object_t * obj) {
 	point->object = obj;
 	point->has_collision = NO;
 
-	matrix_load_identity(point->transformation);
+	vectorSet(point->position, 0, 0, 0);
+	vectorSet(point->rotation, 0, 0 ,0);
 
 	return point;
 }

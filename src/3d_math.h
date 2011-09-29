@@ -8,6 +8,11 @@
 
 #include "global.h"
 
+#define X 0
+#define Y 1
+#define Z 2
+#define W 3
+
 /**
  * Vectors
  */
@@ -23,18 +28,19 @@ typedef float rgba[4];
 typedef float matrix_t[16];
 typedef float matrix3x3_t[9];
 
+typedef float quat4_t[4];
+
 /**
  * Basic VERTEX; the base of triangle
  */
 typedef struct {
-	vec3_t position;
-	vec3_t normal;
-	vec2_t textureCoord;
-	vec3_t tangent;
+    vec3_t position;
+    vec3_t normal;
+    vec2_t textureCoord;
+    vec3_t tangent;
 
-	unsigned char padding[64 - sizeof(vec3_t) - sizeof(vec3_t) - sizeof(vec3_t) - sizeof(vec2_t)];
+    unsigned char padding[64 - sizeof(vec3_t) - sizeof(vec3_t) - sizeof(vec3_t) - sizeof(vec2_t)];
 } vertex_t;
-
 
 /**
  * Offset of things
@@ -48,65 +54,65 @@ typedef struct {
  * 2D Texture Types
  */
 typedef enum td_texture_type {
-	TEXTURE_TYPE_UNKNOWN, TEXTURE_TYPE_RGB, TEXTURE_TYPE_RGBA,
+    TEXTURE_TYPE_UNKNOWN, TEXTURE_TYPE_RGB, TEXTURE_TYPE_RGBA,
 } texture_type_t;
 
 /**
  * 2D Texture
  */
 typedef struct td_texture_t {
-	unsigned char * data;
-	unsigned int data_length;
+    unsigned char * data;
+    unsigned int data_length;
 
-	unsigned int width;
-	unsigned int height;
-	unsigned int bpp;
-	texture_type_t type;
+    unsigned int width;
+    unsigned int height;
+    unsigned int bpp;
+    texture_type_t type;
 
-	/* Renderer Private Data */
-	void * renderer_data;
+    /* Renderer Private Data */
+    void * renderer_data;
 } texture_t;
 
 /**
  * Rendering properties
  */
 typedef union td_properties_t {
-	unsigned char props;
-	struct {
-		char has_bumpmapping :1;
-		char has_specular :1;
-		char has_diffuse :1;
-		char has_UNDEF1 :1;
-		char has_UNDEF2 :1;
-		char has_UNDEF3 :1;
-		char has_alpha :1;
-		char has_shadows :1;
-	};
+    unsigned char props;
+    struct {
+        char has_bumpmapping :1;
+        char has_specular :1;
+        char has_diffuse :1;
+        char has_UNDEF1 :1;
+        char has_UNDEF2 :1;
+        char has_UNDEF3 :1;
+        char has_alpha :1;
+        char has_shadows :1;
+    };
 } props_t;
 
 /**
  * Material is the look of an object
  */
 typedef struct td_material_t {
-	/* Name of this material */
-	char * name;
+    /* Name of this material */
+    char * name;
 
-	/* Material Properties */
-	props_t properties;
+    /* Material Properties */
+    props_t properties;
 
-	/* */
-	float shininess;
+    /* */
+    float shininess;
 
-	/* */
-	rgb specular_color;
+    /* */
+    rgb specular_color;
 
-	/* Textures */
-	texture_t * texture_diffuse;
-	texture_t * texture_bump;
-	texture_t * texture_specular;
+    /* Textures */
+    texture_t * texture_diffuse;
+    texture_t * texture_bump;
+    texture_t * texture_specular;
 
-	/* Renderer Private Data */
-	void * renderer_data;
+    /* Renderer Private Data */
+    void * renderer_data;
 } material_t;
 
 /**
@@ -115,8 +121,8 @@ typedef struct td_material_t {
  * measure within which all the points lie.
  */
 typedef struct td_box_t {
-	vec3_t min;
-	vec3_t max;
+    vec3_t min;
+    vec3_t max;
 } box_t;
 
 /**
@@ -125,29 +131,29 @@ typedef struct td_box_t {
  * object may exist
  */
 typedef struct td_object_t {
-	/* Object name this should be unique */
-	char * name;
+    /* Object name this should be unique */
+    char * name;
 
-	/* The look of this object */
-	material_t * material;
+    /* The look of this object */
+    material_t * material;
 
-	/* Object's vertex */
-	vertex_t * vertices;
+    /* Object's vertex */
+    vertex_t * vertices;
 
-	/* Number of verticies */
-	unsigned short num_verticies;
+    /* Number of verticies */
+    unsigned short num_verticies;
 
-	/* Indicies pointing to the verticies */
-	unsigned short * indices;
+    /* Indicies pointing to the verticies */
+    unsigned short * indices;
 
-	/* Number of indicies */
-	unsigned short num_indices;
+    /* Number of indicies */
+    unsigned short num_indices;
 
-	/* Bounding box */
-	box_t bounding_box;
+    /* Bounding box */
+    box_t bounding_box;
 
-	/* Renderer Private Data */
-	void * renderer_data;
+    /* Renderer Private Data */
+    void * renderer_data;
 
 } object_t;
 
@@ -155,32 +161,32 @@ typedef struct td_object_t {
  * A light source
  */
 typedef struct td_light_t {
-	/* Light Position */
-	vec4_t position;
+    /* Light Position */
+    vec4_t position;
 
-	/* Where the light points to */
-	vec3_t lookAt;
+    /* Where the light points to */
+    vec3_t lookAt;
 
-	/* The "UP" vector for the light */
-	vec3_t upVector;
+    /* The "UP" vector for the light */
+    vec3_t upVector;
 
-	/* Field-of-view of the light */
-	float fov;
+    /* Field-of-view of the light */
+    float fov;
 
-	/* Ambiant color */
-	vec4_t ambient;
+    /* Ambiant color */
+    vec4_t ambient;
 
-	/* Diffuse color */
-	vec4_t diffuse;
+    /* Diffuse color */
+    vec4_t diffuse;
 
-	/* Specular color */
-	vec4_t specula;
+    /* Specular color */
+    vec4_t specula;
 
-	/* Constant Attenuation */
-	float constantAttenuation;
+    /* Constant Attenuation */
+    float constantAttenuation;
 
-	/* Linear Attenuation */
-	float linearAttenuation;
+    /* Linear Attenuation */
+    float linearAttenuation;
 } light_t;
 
 /**
@@ -188,25 +194,25 @@ typedef struct td_light_t {
  * Normally there should be only one
  */
 typedef struct td_camera_t {
-	/* Position of the camera */
-	vec4_t position;
+    /* Position of the camera */
+    vec4_t position;
 
-	/* Forward direction */
-	vec3_t forward;
+    /* Forward direction */
+    vec3_t forward;
 
-	/* Right direction */
-	vec3_t right;
+    /* Right direction */
+    vec3_t right;
 
-	/* Up vector */
-	vec3_t up;
+    /* Up vector */
+    vec3_t up;
 
-	float pitch;
-	float head;
+    float pitch;
+    float head;
 
-	float aspect;
-	float fov;
-	float zNear;
-	float zFar;
+    float aspect;
+    float fov;
+    float zNear;
+    float zFar;
 } camera_t;
 
 /***************************************************************************************************************************
@@ -244,6 +250,21 @@ void matrix_multiply3x3(const matrix3x3_t m1, const matrix3x3_t m2, matrix3x3_t 
 void matrix_print3x3(matrix3x3_t m);
 void matrix_transform_vec3t(const matrix3x3_t m1, const vec3_t vect, vec3_t dest);
 
+void Quat_fromEuler(float pitch, float yaw, float roll, quat4_t dest);
+void Quat_to_matrix(quat4_t q, matrix_t matrix);
+void Quat_computeW(quat4_t q);
+void Quat_normalize(quat4_t q);
+void Quat_mult_quat(const quat4_t qa, const quat4_t qb, quat4_t out);
+void Quat_mult_vec(const quat4_t q, const vec3_t v, quat4_t out);
+void multiply_by_invert_quaternion(const vec3_t v1, const quat4_t quat, vec3_t dest);
+void Quat_rotate_point(const quat4_t q, const vec3_t in, vec3_t out);
+void Quat_rotate_short_point(const quat4_t q, const vec3s_t in, vec3_t out);
+
+float Quat_dot_product(const quat4_t qa, const quat4_t qb);
+void Quat_slerp(const quat4_t qa, const quat4_t qb, float t, quat4_t out);
+void Quat_create_from_mat3x3(const matrix3x3_t matrix, quat4_t out);
+void Quat_convert_to_mat3x3(matrix3x3_t matrix, const quat4_t out);
+
 /***************************************************************************************************************************
  * World Structures 
  **************************************************************************************************************************/
@@ -252,28 +273,34 @@ void matrix_transform_vec3t(const matrix3x3_t m1, const vec3_t vect, vec3_t dest
  * Instance of an object
  */
 typedef struct world_object_instance_t {
-	/* The Object */
-	struct td_object_t * object;
+    /* The Object */
+    struct td_object_t * object;
 
-	/* This instance's transformation */
-	matrix_t transformation;
+    /* This instance's transformation */
+    //matrix_t transformation;
 
-	/* Should this object be in the collision system ? */
-	BOOL has_collision;
+    /* This instance's position */
+    vec3_t position;
 
-	/* Should we actually render this object ? */
-	BOOL is_active;
+    /* This instance's rotation */
+    vec3_t rotation;
 
-	/* The next instance */
-	struct world_object_instance_t * next;
+    /* Should this object be in the collision system ? */
+    BOOL has_collision;
+
+    /* Should we actually render this object ? */
+    BOOL is_active;
+
+    /* The next instance */
+    struct world_object_instance_t * next;
 } world_object_instance_t;
 
 /**
  * THE World
  */
 typedef struct world_t {
-	unsigned int num_objects;
-	world_object_instance_t * objects;
+    unsigned int num_objects;
+    world_object_instance_t * objects;
 } world_t;
 
 #endif
