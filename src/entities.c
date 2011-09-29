@@ -20,7 +20,7 @@ static object_t * alloc_new_object(char * name) {
 		memset(obj, 0, sizeof(object_t));
 
 		if (name) {
-			obj->name = malloc(sizeof(char) * (strlen(name) + 1));
+			obj->name = malloc(sizeof(char) * (strlen(name)));
 
 			if (obj->name) {
 				strcpy(obj->name, name);
@@ -62,13 +62,13 @@ object_t * ENTITY_NewDummyObject() {
 	obj = alloc_new_object("dummy object");
 
 	obj->num_verticies = 12;
-	obj->vertices = malloc(sizeof(vertex_t) * obj->num_verticies);
+	obj->vertices = malloc(1 + sizeof(vertex_t) * obj->num_verticies);
 	for (i = 0; i < obj->num_verticies; i++) {
 		vectorSet(obj->vertices[i].position, vdata[i][0], vdata[i][1], vdata[i][2]);
 	}
 
 	obj->num_indices = 20 * 3;
-	obj->indices = malloc(sizeof(unsigned short) * obj->num_indices);
+	obj->indices = malloc(1 + sizeof(unsigned short) * obj->num_indices);
 	for (i = 0; i <= obj->num_indices; i++) {
 		obj->indices[i] = tindices[i / 3][i % 3];
 	}

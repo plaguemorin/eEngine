@@ -6,6 +6,7 @@
  */
 
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 
 #include "engine.h"
@@ -39,4 +40,12 @@ void engine_update() {
 
 void engine_drawframe() {
 	REN_HostFrame();
+}
+
+#undef malloc
+void * debug_malloc(size_t s, const char * file, int line) {
+
+	printf("[MALLOC] %lu bytes %s:%d\n", s, file, line);
+
+	return malloc(s);
 }

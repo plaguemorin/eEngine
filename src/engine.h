@@ -68,4 +68,7 @@ BOOL engine_init(int w, int h);
 void engine_update();
 void engine_drawframe();
 
+#define malloc(x) debug_malloc(x, __FILE__, __LINE__)
+void * debug_malloc(size_t s, const char * file, int line);
+
 #endif

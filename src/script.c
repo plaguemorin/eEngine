@@ -107,6 +107,11 @@ static int move_entity(lua_State *L) {
 	float x, y, z;
 	int argc = lua_gettop(L);
 
+	if (argc != 4) {
+		printf("method move_entity takes 4 parameters: <entity>, <x>, <y>, <z>\n");
+		return 0;
+	}
+
 	if (lua_isuserdata(L, -4)) {
 		p = lua_touserdata(L, -4);
 	} else {
