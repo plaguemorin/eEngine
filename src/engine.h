@@ -59,6 +59,8 @@ typedef struct all_engine_t {
 
 	unsigned int					renderWidth;
 	unsigned int					renderHeight;
+
+	float							lastRenderTime;
 } engine_t;
 
 extern engine_t * engine;

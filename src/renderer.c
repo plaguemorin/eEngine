@@ -50,6 +50,10 @@ BOOL RENDERER_Destroy() {
 	return YES;
 }
 
+void REN_Update(float deltaTime) {
+
+}
+
 void REN_HostFrame() {
 	world_object_instance_t * object;
 

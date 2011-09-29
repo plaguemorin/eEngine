@@ -11,5 +11,6 @@
 BOOL SCRIPTING_Init();
 BOOL SCRIPTING_Destory();
 BOOL SCRIPTING_AfterLoaded();
+void SCRIPTING_Update(float);
 
 #endif

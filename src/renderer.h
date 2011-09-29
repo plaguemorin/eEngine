@@ -13,6 +13,7 @@
 BOOL RENDERER_Init(int w, int h);
 BOOL RENDERER_Destroy();
 
+void REN_Update(float);
 void REN_HostFrame();
 BOOL REN_MakeAvailable(object_t *);
 
