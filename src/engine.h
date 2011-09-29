@@ -8,9 +8,9 @@
 #define ENGINE_H_
 
 #include "global.h"
+#include "3d_math.h"
 
 struct lua_State;
-struct renderer_t;
 union td_properties_t;
 struct td_texture_t;
 struct td_material_t;
@@ -31,8 +31,12 @@ typedef struct all_renderer_t {
 	
 	BOOL (*init)(int windowWidth, int windowHeight);
 	
+	void (*start_3D)(camera_t * camera);
+	void (*render_object_instance)(world_object_instance_t *);
+	void (*end_3D)();
+
 	BOOL (*register_texture)(struct td_texture_t *);
-	BOOL (*unregister_texture(struct td_texture_t *);
+	BOOL (*unregister_texture)(struct td_texture_t *);
 	
 	BOOL (*register_material)(struct td_material_t *);
 	BOOL (*unregister_material)(struct td_material_t *);
@@ -49,8 +53,19 @@ typedef struct all_renderer_t {
  */
 typedef struct all_engine_t {
 	struct lua_State		* 		lua;
-	struct renderer_t		*		renderer;
-	struct world_t			*		world;
+	renderer_t				*		renderer;
+	world_t					*		world;
+	camera_t						camera;
+
+	unsigned int					renderWidth;
+	unsigned int					renderHeight;
 } engine_t;
+
+extern engine_t * engine;
+
+BOOL engine_init(int w, int h);
+
+void engine_update();
+void engine_drawframe();
 
 #endif

@@ -3,6 +3,8 @@
  *
  */
 
-BOOL ENTITY_Init(engine_t *);
-BOOL ENTITY_Update(engine_t *);
-BOOL ENTITY_Destroy(engine_t *);
+BOOL ENTITY_Init();
+BOOL ENTITY_Update();
+BOOL ENTITY_Destroy();
+
+object_t * ENTITY_NewDummyObject();

@@ -1,5 +1,7 @@
-print("I am using Lua from within C")
 
-p = entity_load("triangle")
+camera_set_defaults()
 
-print(p)
+p = entity_loadDummy()
+i = world_add(p)
+
+move_entity(i, -1.5, 0.0, -6.0)
