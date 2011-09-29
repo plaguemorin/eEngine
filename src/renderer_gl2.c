@@ -196,11 +196,11 @@ static BOOL registerObject(object_t * object) {
 
 	object->renderer_data = objData;
 	objData->memory_location = OBJECT_MEMLOC_VRAM;
-	/*
-	 glGenBuffers(1, &objData->vboId);
-	 glBindBuffer(GL_ARRAY_BUFFER, objData->vboId);
-	 glBufferData(GL_ARRAY_BUFFER, object->num_verticies * sizeof(vertex_t), object->vertices, GL_STATIC_DRAW);
-	 */
+
+	glGenBuffers(1, &objData->vboId);
+	glBindBuffer(GL_ARRAY_BUFFER, objData->vboId);
+	glBufferData(GL_ARRAY_BUFFER, object->num_verticies * sizeof(vertex_t), object->vertices, GL_STATIC_DRAW);
+
 	CheckErrorsF("UploadObjectToGPU", object->name);
 
 	return YES;
@@ -242,12 +242,22 @@ static void setup3d(camera_t * camera) {
 }
 
 static void render(world_object_instance_t * object) {
+	renderer_prog_object_t * objData;
+
+	objData = object->object->renderer_data;
+
 	glPushMatrix();
 	glLoadMatrixf(object->transformation);
 
-	glNormalPointer(GL_SHORT, sizeof(vertex_t), object->object->vertices[0].normal);
-	glTexCoordPointer(2, GL_SHORT, sizeof(vertex_t), object->object->vertices[0].textureCoord);
-	glVertexPointer(3, GL_FLOAT, sizeof(vertex_t), object->object->vertices[0].position);
+	if (objData->memory_location == OBJECT_MEMLOC_VRAM) {
+		glNormalPointer(GL_SHORT, sizeof(vertex_t), (char *)(NULL + VERTEX_OFFSET_OF_NORMAL));
+		glTexCoordPointer(2, GL_SHORT, sizeof(vertex_t), (char *)(NULL + VERTEX_OFFSET_OF_TEXTURECOORD));
+		glVertexPointer(3, GL_FLOAT, sizeof(vertex_t), (char *)(NULL + VERTEX_OFFSET_OF_POSITION));
+	} else {
+		glNormalPointer(GL_SHORT, sizeof(vertex_t), object->object->vertices[0].normal);
+		glTexCoordPointer(2, GL_SHORT, sizeof(vertex_t), object->object->vertices[0].textureCoord);
+		glVertexPointer(3, GL_FLOAT, sizeof(vertex_t), object->object->vertices[0].position);
+	}
 
 	glDrawElements(GL_TRIANGLES, object->object->num_indices, GL_UNSIGNED_SHORT, object->object->indices);
 
