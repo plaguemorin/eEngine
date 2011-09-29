@@ -35,6 +35,10 @@ typedef struct all_renderer_t {
 	void (*render_object_instance)(world_object_instance_t *);
 	void (*end_3D)();
 
+	void (*start_2D)(int, int);
+	void (*printString)(int, int, font_t *, const char *);
+	void (*end_2D)();
+
 	BOOL (*register_texture)(struct td_texture_t *);
 	BOOL (*unregister_texture)(struct td_texture_t *);
 	
@@ -61,6 +65,7 @@ typedef struct all_engine_t {
 	unsigned int					renderHeight;
 
 	float							lastRenderTime;
+	font_t                  *       defaultFont;
 } engine_t;
 
 extern engine_t * engine;

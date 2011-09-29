@@ -1,11 +1,11 @@
 
+rot = 0
+
 set_update("update")
 camera_set_defaults()
 
 p = entity_loadDummy()
 i = world_add(p)
-
-rot = 0
 move_entity(i, -1.5, 0.0, -30.0)
 
 function update(delta)

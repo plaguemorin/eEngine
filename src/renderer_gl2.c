@@ -25,6 +25,9 @@ matrix_t projectionMatrix;
 matrix_t modelViewMatrix;
 matrix_t textureMatrix = { 1.0f / 32767, 0, 0, 0, 0, 1.0f / 32767, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1 }; //Unpacking matrix
 
+vertex_t verticesSprite[4];
+unsigned short indicesSprite[6] =  {1,2,3,1,3,4};
+
 typedef enum prog_location {
     OBJECT_MEMLOC_VRAM, OBJECT_MEMLOC_RAM,
 } prog_location;
@@ -304,6 +307,34 @@ static void end3d() {
 
 }
 
+static void start2D(int renderWidth, int renderHeight) {
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glDisable(GL_DEPTH_TEST);
+
+    glDisableClientState(GL_NORMAL_ARRAY);
+    glDisable(GL_LIGHTING);
+
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    glOrtho(-renderWidth, renderWidth, -renderHeight, renderHeight, -1, 1);
+    //glOrthof(-1.0f, 1.0f, -1.5f, 1.5f, -1.0f, 1.0f);
+
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+
+    glMatrixMode(GL_TEXTURE);
+    glLoadIdentity();
+}
+
+static void end2D() {
+
+}
+
+static void printString(int x, int y, font_t * font, const char * txt) {
+
+}
+
 renderer_t * rendererInitProc() {
     renderer_t * renderer;
     renderer = malloc(sizeof(renderer_t));
@@ -317,6 +348,10 @@ renderer_t * rendererInitProc() {
         renderer->start_3D = &setup3d;
         renderer->render_object_instance = &render;
         renderer->end_3D = &end3d;
+
+        renderer->start_2D = &start2D;
+        renderer->printString = &printString;
+        renderer->end_2D = &end2D;
     }
 
     return renderer;

@@ -72,6 +72,10 @@ void REN_HostFrame() {
 
 		engine->renderer->end_3D();
 	}
+
+	engine->renderer->start_2D(engine->renderWidth, engine->renderHeight);
+	engine->renderer->printString(1, 1, engine->defaultFont, "Allo");
+	engine->renderer->end_2D();
 }
 
 BOOL REN_MakeAvailable(object_t * obj) {
