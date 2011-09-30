@@ -21,76 +21,82 @@
 
 #define DEG_TO_RAD (2.0f*3.14159265f/360.0f)
 
-matrix_t projectionMatrix;
-matrix_t modelViewMatrix;
-matrix_t textureMatrix = { 1.0f / 32767, 0, 0, 0, 0, 1.0f / 32767, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1 }; //Unpacking matrix
+static matrix_t projectionMatrix;
+static matrix_t modelViewMatrix;
 
-vertex_t verticesSprite[4];
-unsigned short indicesSprite[6] =  {1,2,3,1,3,4};
+static vec3_t verticesSprite[4] = { { 0, 0, 0 }, { 1, 0, 0 }, { 1, 1, 0 }, { 0, 1, 0 } };
+static vec2_t textureCoordSprite[4] = { { 0, 0 }, { 1, 0 }, { 1, 1 }, { 0, 1 } };
+static unsigned short indicesSprite[6] = { 1, 2, 3, 1, 3, 4 };
+
+static unsigned int last_texture;
 
 typedef enum prog_location {
-    OBJECT_MEMLOC_VRAM, OBJECT_MEMLOC_RAM,
+	OBJECT_MEMLOC_VRAM, OBJECT_MEMLOC_RAM,
 } prog_location;
 
 typedef struct renderer_prog_object_t {
-    GLuint vboId;
-    prog_location memory_location;
+	GLuint vboId;
+	prog_location memory_location;
 } renderer_prog_object_t;
 
-static void Perspective(float fovy, float aspect, float zNear, float zFar, matrix_t projectionMatrix) {
-    float f = (float) (1 / tan(fovy * DEG_TO_RAD / 2));
+typedef struct renderer_prog_texture_t {
+	GLuint texId;
+} renderer_prog_texture_t;
 
-    projectionMatrix[0] = f / aspect;
-    projectionMatrix[4] = 0;
-    projectionMatrix[8] = 0;
-    projectionMatrix[12] = 0;
-    projectionMatrix[1] = 0;
-    projectionMatrix[5] = f;
-    projectionMatrix[9] = 0;
-    projectionMatrix[13] = 0;
-    projectionMatrix[2] = 0;
-    projectionMatrix[6] = 0;
-    projectionMatrix[10] = (zFar + zNear) / (zNear - zFar);
-    projectionMatrix[14] = 2 * (zFar * zNear) / (zNear - zFar);
-    projectionMatrix[3] = 0;
-    projectionMatrix[7] = 0;
-    projectionMatrix[11] = -1;
-    projectionMatrix[15] = 0;
+static void Perspective(float fovy, float aspect, float zNear, float zFar, matrix_t projectionMatrix) {
+	float f = (float) (1 / tan(fovy * DEG_TO_RAD / 2));
+
+	projectionMatrix[0] = f / aspect;
+	projectionMatrix[4] = 0;
+	projectionMatrix[8] = 0;
+	projectionMatrix[12] = 0;
+	projectionMatrix[1] = 0;
+	projectionMatrix[5] = f;
+	projectionMatrix[9] = 0;
+	projectionMatrix[13] = 0;
+	projectionMatrix[2] = 0;
+	projectionMatrix[6] = 0;
+	projectionMatrix[10] = (zFar + zNear) / (zNear - zFar);
+	projectionMatrix[14] = 2 * (zFar * zNear) / (zNear - zFar);
+	projectionMatrix[3] = 0;
+	projectionMatrix[7] = 0;
+	projectionMatrix[11] = -1;
+	projectionMatrix[15] = 0;
 }
 
 static void LookAt(vec3_t vEye, vec3_t vLookat, vec3_t vUp, matrix_t fModelView) {
-    vec3_t vN, vU, vV;
+	vec3_t vN, vU, vV;
 
-    // determine the new n
-    vectorSubtract(vEye, vLookat, vN);
+	// determine the new n
+	vectorSubtract(vEye, vLookat, vN);
 
-    // determine the new u by crossing with the up vector
-    vector_cross_product(vUp, vN, vU);
+	// determine the new u by crossing with the up vector
+	vector_cross_product(vUp, vN, vU);
 
-    // normalize both the u and n vectors
-    normalize(vU);
-    normalize(vN);
+	// normalize both the u and n vectors
+	normalize(vU);
+	normalize(vN);
 
-    // determine v by crossing n and u
-    vector_cross_product(vN, vU, vV);
+	// determine v by crossing n and u
+	vector_cross_product(vN, vU, vV);
 
-    // create a model view matrix
-    fModelView[0] = vU[0];
-    fModelView[4] = vU[1];
-    fModelView[8] = vU[2];
-    fModelView[12] = -dotProduct(vEye, vU);
-    fModelView[1] = vV[0];
-    fModelView[5] = vV[1];
-    fModelView[9] = vV[2];
-    fModelView[13] = -dotProduct(vEye, vV);
-    fModelView[2] = vN[0];
-    fModelView[6] = vN[1];
-    fModelView[10] = vN[2];
-    fModelView[14] = -dotProduct(vEye, vN);
-    fModelView[3] = 0.0f;
-    fModelView[7] = 0.0f;
-    fModelView[11] = 0.0f;
-    fModelView[15] = 1.0f;
+	// create a model view matrix
+	fModelView[0] = vU[0];
+	fModelView[4] = vU[1];
+	fModelView[8] = vU[2];
+	fModelView[12] = -dotProduct(vEye, vU);
+	fModelView[1] = vV[0];
+	fModelView[5] = vV[1];
+	fModelView[9] = vV[2];
+	fModelView[13] = -dotProduct(vEye, vV);
+	fModelView[2] = vN[0];
+	fModelView[6] = vN[1];
+	fModelView[10] = vN[2];
+	fModelView[14] = -dotProduct(vEye, vN);
+	fModelView[3] = 0.0f;
+	fModelView[7] = 0.0f;
+	fModelView[11] = 0.0f;
+	fModelView[15] = 1.0f;
 
 }
 
@@ -98,209 +104,276 @@ static void LookAt(vec3_t vEye, vec3_t vLookat, vec3_t vUp, matrix_t fModelView)
  * Check for OpenGL errors
  */
 static void CheckErrorsF(char* step, char* details) {
-    glFlush();
-    GLenum err = glGetError();
-    switch (err) {
-    case GL_INVALID_ENUM:
-        printf("[GLES2] Error GL_INVALID_ENUM %s, %s\n", step, details);
-        break;
-    case GL_INVALID_VALUE:
-        printf("[GLES2] Error GL_INVALID_VALUE  %s, %s\n", step, details);
-        break;
-    case GL_INVALID_OPERATION:
-        printf("[GLES2] Error GL_INVALID_OPERATION  %s, %s\n", step, details);
-        break;
-    case GL_OUT_OF_MEMORY:
-        printf("[GLES2] Error GL_OUT_OF_MEMORY  %s, %s\n", step, details);
-        break;
-    case GL_NO_ERROR:
-        break;
-    default:
-        printf("[GLES2] Error UNKNOWN  %s, %s \n", step, details);
-        break;
-    }
+	glFlush();
+	GLenum err = glGetError();
+	switch (err) {
+		case GL_INVALID_ENUM:
+			printf("[GLES2] Error GL_INVALID_ENUM %s, %s\n", step, details);
+			break;
+		case GL_INVALID_VALUE:
+			printf("[GLES2] Error GL_INVALID_VALUE  %s, %s\n", step, details);
+			break;
+		case GL_INVALID_OPERATION:
+			printf("[GLES2] Error GL_INVALID_OPERATION  %s, %s\n", step, details);
+			break;
+		case GL_OUT_OF_MEMORY:
+			printf("[GLES2] Error GL_OUT_OF_MEMORY  %s, %s\n", step, details);
+			break;
+		case GL_NO_ERROR:
+			break;
+		default:
+			printf("[GLES2] Error UNKNOWN  %s, %s \n", step, details);
+			break;
+	}
 }
 
 /**
  * Check for framebuffer errors
  */
 static void CheckFBStatus() {
-    GLenum status;
+	GLenum status;
 
-    glFlush();
-    status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
-    switch (status) {
-    case GL_FRAMEBUFFER_COMPLETE:
-        printf("[GLES2] GL_FRAMEBUFFER_COMPLETE\n");
-        break;
-    case 0x8CDB:
-        printf("[GLES2] GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER_EXT\n");
-        break;
-    case GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT:
-        printf("[GLES2] GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT\n");
-        break;
-    case GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT:
-        printf("[GLES2] GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT\n");
-        break;
-        //case GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS:            printf("GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS\n");break;
-    case GL_FRAMEBUFFER_UNSUPPORTED:
-        printf("[GLES2] GL_FRAMEBUFFER_UNSUPPORTED\n");
-        break;
-    default:
-        printf("[GLES2] Unknown issue (%x).\n", status);
-        break;
-    }
+	glFlush();
+	status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+	switch (status) {
+		case GL_FRAMEBUFFER_COMPLETE:
+			printf("[GLES2] GL_FRAMEBUFFER_COMPLETE\n");
+			break;
+		case 0x8CDB:
+			printf("[GLES2] GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER_EXT\n");
+			break;
+		case GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT:
+			printf("[GLES2] GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT\n");
+			break;
+		case GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT:
+			printf("[GLES2] GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT\n");
+			break;
+			//case GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS:            printf("GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS\n");break;
+		case GL_FRAMEBUFFER_UNSUPPORTED:
+			printf("[GLES2] GL_FRAMEBUFFER_UNSUPPORTED\n");
+			break;
+		default:
+			printf("[GLES2] Unknown issue (%x).\n", status);
+			break;
+	}
 }
 
 static BOOL init(int w, int h) {
-    glViewport(0, 0, w, h);
+	glViewport(0, 0, w, h);
 
-    glEnable(GL_LIGHTING);
-    glEnable(GL_LIGHT0);
-    glDisable(GL_ALPHA_TEST);
-    glEnable(GL_CULL_FACE);
-    glCullFace(GL_BACK);
+	glEnable(GL_LIGHTING);
+	glEnable(GL_LIGHT0);
+	glDisable(GL_ALPHA_TEST);
+	glEnable(GL_CULL_FACE);
+	glCullFace(GL_BACK);
 
-    glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-    //glEnable(GL_TEXTURE_2D);
+	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+	glDisable(GL_TEXTURE_2D);
 
-    glEnableClientState(GL_VERTEX_ARRAY);
-    glEnableClientState(GL_NORMAL_ARRAY);
-    glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-    glEnableClientState(GL_ARRAY_BUFFER);
+	glEnableClientState(GL_VERTEX_ARRAY);
+	glEnableClientState(GL_NORMAL_ARRAY);
+	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+	glEnableClientState(GL_ARRAY_BUFFER);
 
-    glClearColor(0.0f, 0.0f, 0.5f, 1.0f);
-    glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+	glClearColor(0.0f, 0.0f, 0.5f, 1.0f);
+	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 
-    CheckErrorsF("init", "no details");
-    CheckFBStatus();
+	CheckErrorsF("init", "no details");
+	CheckFBStatus();
 
-    return YES;
+	return YES;
 }
 
 static BOOL registerObject(object_t * object) {
-    renderer_prog_object_t * objData;
+	renderer_prog_object_t * objData;
 
-    if (!object) {
-        printf("[GLES2] Object data was NULL nothing to upload\n");
-        return NO;
-    }
+	if (!object) {
+		printf("[GLES2] Object data was NULL nothing to upload\n");
+		return NO;
+	}
 
-    if (object->renderer_data) {
-        printf("[GLES2] Object %s seems already uploaded\n", object->name);
-        return NO;
-    }
+	if (object->renderer_data) {
+		printf("[GLES2] Object %s seems already uploaded\n", object->name);
+		return NO;
+	}
 
-    objData = malloc(sizeof(renderer_prog_object_t));
-    if (!objData) {
-        printf("[GLES2] Unable to allocate memory for object data\n");
-        return NO;
-    }
+	objData = malloc(sizeof(renderer_prog_object_t));
+	if (!objData) {
+		printf("[GLES2] Unable to allocate memory for object data\n");
+		return NO;
+	}
 
-    object->renderer_data = objData;
-    objData->memory_location = OBJECT_MEMLOC_VRAM;
+	object->renderer_data = objData;
+	objData->memory_location = OBJECT_MEMLOC_VRAM;
 
-    glGenBuffers(1, &objData->vboId);
-    glBindBuffer(GL_ARRAY_BUFFER, objData->vboId);
-    glBufferData(GL_ARRAY_BUFFER, object->num_verticies * sizeof(vertex_t), object->vertices, GL_STATIC_DRAW);
+	glGenBuffers(1, &objData->vboId);
+	glBindBuffer(GL_ARRAY_BUFFER, objData->vboId);
+	glBufferData(GL_ARRAY_BUFFER, object->num_verticies * sizeof(vertex_t), object->vertices, GL_STATIC_DRAW);
 
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-    CheckErrorsF("UploadObjectToGPU", object->name);
+	CheckErrorsF("UploadObjectToGPU", object->name);
 
-    return YES;
+	return YES;
+}
+
+static BOOL registerTexture(texture_t * tex) {
+	renderer_prog_texture_t * texData;
+
+	if (!tex) {
+		printf("[GLES2] Texture was null\n");
+		return NO;
+	}
+
+	if (tex->renderer_data) {
+		printf("[GLES2] Texture is already registered\n");
+		return NO;
+	}
+
+	texData = malloc(sizeof(renderer_prog_texture_t));
+	if (!texData) {
+		printf("[GLES2] Unable to allocate memory for texture data\n");
+		return NO;
+	}
+
+	tex->renderer_data = texData;
+
+	glActiveTexture(GL_TEXTURE0);
+	glGenTextures(1, &texData->texId);
+	glBindTexture(GL_TEXTURE_2D, texData->texId);
+
+	switch (tex->type) {
+		case TEXTURE_TYPE_RGB:
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, tex->width, tex->height, 0, GL_RGB, GL_UNSIGNED_BYTE, tex->data);
+			glGenerateMipmap(GL_TEXTURE_2D);
+			break;
+
+		case TEXTURE_TYPE_RGBA:
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, tex->width, tex->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, tex->data);
+			glGenerateMipmap(GL_TEXTURE_2D);
+			break;
+
+		default:
+			printf("[GLES2] Unknown texture format \n");
+			free(tex->data);
+			return NO;
+			break;
+	}
+
+	free(tex->data);
+
+	/* Using mipMapping to reduce bandwidth consumption */
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+	return YES;
+}
+
+static void useTexture(texture_t * tex) {
+	renderer_prog_texture_t * texData;
+	if (tex) {
+		texData = tex->renderer_data;
+
+		if (texData) {
+			if (last_texture != texData->texId) {
+				glBindTexture(GL_TEXTURE_2D, texData->texId);
+				last_texture = texData->texId;
+			}
+		}
+	}
+
 }
 
 static void setup3d(camera_t * camera) {
-    vec3_t vLookat;
+	vec3_t vLookat;
 
-    glDisable(GL_BLEND);
-    glEnable(GL_DEPTH_TEST);
-    glEnableClientState(GL_NORMAL_ARRAY);
-    glEnable(GL_LIGHTING);
-    glShadeModel(GL_SMOOTH);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glDisable(GL_BLEND);
+	glEnable(GL_DEPTH_TEST);
+	glEnableClientState(GL_NORMAL_ARRAY);
+	glEnable(GL_LIGHTING);
+	glShadeModel(GL_SMOOTH);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    glMatrixMode(GL_PROJECTION);
-    Perspective(camera->fov, camera->aspect, camera->zNear, camera->zFar, projectionMatrix);
-    glLoadMatrixf(projectionMatrix);
+	glMatrixMode(GL_PROJECTION);
+	Perspective(camera->fov, camera->aspect, camera->zNear, camera->zFar, projectionMatrix);
+	glLoadMatrixf(projectionMatrix);
 
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
 
-    /* Setup the camera */
-    vectorAdd(camera->position, camera->forward, vLookat);
-    LookAt(camera->position, vLookat, camera->up, modelViewMatrix);
-    glLoadMatrixf(modelViewMatrix);
+	/* Setup the camera */
+	vectorAdd(camera->position, camera->forward, vLookat);
+	LookAt(camera->position, vLookat, camera->up, modelViewMatrix);
+	glLoadMatrixf(modelViewMatrix);
 
-    /* Setup Lights */
-    glDisable(GL_LIGHTING);
-    /*
-     glLightfv(GL_LIGHT0, GL_POSITION, light.position);
-     glLightfv(GL_LIGHT0, GL_AMBIENT, light.ambient);
-     glLightfv(GL_LIGHT0, GL_DIFFUSE, light.diffuse);
-     glLightfv(GL_LIGHT0, GL_SPECULAR, light.specula);
+	/* Setup Lights */
+	glDisable(GL_LIGHTING);
+	/*
+	 glLightfv(GL_LIGHT0, GL_POSITION, light.position);
+	 glLightfv(GL_LIGHT0, GL_AMBIENT, light.ambient);
+	 glLightfv(GL_LIGHT0, GL_DIFFUSE, light.diffuse);
+	 glLightfv(GL_LIGHT0, GL_SPECULAR, light.specula);
 
-     glLightf(GL_LIGHT0, GL_CONSTANT_ATTENUATION, light.constantAttenuation);
-     glLightf(GL_LIGHT0, GL_LINEAR_ATTENUATION, light.linearAttenuation);
-     */
+	 glLightf(GL_LIGHT0, GL_CONSTANT_ATTENUATION, light.constantAttenuation);
+	 glLightf(GL_LIGHT0, GL_LINEAR_ATTENUATION, light.linearAttenuation);
+	 */
 }
 
 static void render_render_matrix(world_object_instance_t * object) {
-    float A, B, C, D, E, F, AD, BD;
-    matrix_t mat;
+	float A, B, C, D, E, F, AD, BD;
+	matrix_t mat;
 
-    A = cos(object->rotation[0]);
-    B = sin(object->rotation[0]);
-    C = cos(object->rotation[1]);
-    D = sin(object->rotation[1]);
-    E = cos(object->rotation[2]);
-    F = sin(object->rotation[2]);
+	A = cos(object->rotation[0]);
+	B = sin(object->rotation[0]);
+	C = cos(object->rotation[1]);
+	D = sin(object->rotation[1]);
+	E = cos(object->rotation[2]);
+	F = sin(object->rotation[2]);
 
-    AD = A * D;
-    BD = B * D;
+	AD = A * D;
+	BD = B * D;
 
-    mat[0] = C * E;
-    mat[1] = -C * F;
-    mat[2] = -D;
-    mat[4] = -BD * E + A * F;
-    mat[5] = BD * F + A * E;
-    mat[6] = -B * C;
-    mat[8] = AD * E + B * F;
-    mat[9] = -AD * F + B * E;
-    mat[10] = A * C;
+	mat[0] = C * E;
+	mat[1] = -C * F;
+	mat[2] = -D;
+	mat[4] = -BD * E + A * F;
+	mat[5] = BD * F + A * E;
+	mat[6] = -B * C;
+	mat[8] = AD * E + B * F;
+	mat[9] = -AD * F + B * E;
+	mat[10] = A * C;
 
-    mat[3] = mat[7] = mat[11] = mat[12] = mat[13] = mat[14] = 0;
-    mat[15] = 1;
+	mat[3] = mat[7] = mat[11] = mat[12] = mat[13] = mat[14] = 0;
+	mat[15] = 1;
 
-    matrixTranslate(mat, object->position[0], object->position[1], object->position[2]);
-    glLoadMatrixf(mat);
+	matrixTranslate(mat, object->position[0], object->position[1], object->position[2]);
+	glLoadMatrixf(mat);
 
 }
 
 static void render(world_object_instance_t * object) {
-    renderer_prog_object_t * objData;
+	renderer_prog_object_t * objData;
 
-    objData = object->object->renderer_data;
+	objData = object->object->renderer_data;
 
-    glPushMatrix();
-    render_render_matrix(object);
+	glPushMatrix();
+	render_render_matrix(object);
 
-    if (objData->memory_location == OBJECT_MEMLOC_VRAM) {
-        glBindBuffer(GL_ARRAY_BUFFER, objData->vboId);
+	if (objData->memory_location == OBJECT_MEMLOC_VRAM) {
+		glBindBuffer(GL_ARRAY_BUFFER, objData->vboId);
 
-        glNormalPointer(GL_SHORT, sizeof(vertex_t), (char *) (NULL + VERTEX_OFFSET_OF_NORMAL));
-        glTexCoordPointer(2, GL_SHORT, sizeof(vertex_t), (char *) (NULL + VERTEX_OFFSET_OF_TEXTURECOORD));
-        glVertexPointer(3, GL_FLOAT, sizeof(vertex_t), (char *) (NULL + VERTEX_OFFSET_OF_POSITION));
-    } else {
-        glNormalPointer(GL_SHORT, sizeof(vertex_t), object->object->vertices[0].normal);
-        glTexCoordPointer(2, GL_SHORT, sizeof(vertex_t), object->object->vertices[0].textureCoord);
-        glVertexPointer(3, GL_FLOAT, sizeof(vertex_t), object->object->vertices[0].position);
-    }
+		glNormalPointer(GL_SHORT, sizeof(vertex_t), (char *) (NULL + VERTEX_OFFSET_OF_NORMAL));
+		glTexCoordPointer(2, GL_SHORT, sizeof(vertex_t), (char *) (NULL + VERTEX_OFFSET_OF_TEXTURECOORD));
+		glVertexPointer(3, GL_FLOAT, sizeof(vertex_t), (char *) (NULL + VERTEX_OFFSET_OF_POSITION));
+	} else {
+		glNormalPointer(GL_SHORT, sizeof(vertex_t), object->object->vertices[0].normal);
+		glTexCoordPointer(2, GL_SHORT, sizeof(vertex_t), object->object->vertices[0].textureCoord);
+		glVertexPointer(3, GL_FLOAT, sizeof(vertex_t), object->object->vertices[0].position);
+	}
 
-    glDrawElements(GL_TRIANGLES, object->object->num_indices, GL_UNSIGNED_SHORT, object->object->indices);
+	glDrawElements(GL_TRIANGLES, object->object->num_indices, GL_UNSIGNED_SHORT, object->object->indices);
 
-    glPopMatrix();
+	glPopMatrix();
 }
 
 static void end3d() {
@@ -308,23 +381,26 @@ static void end3d() {
 }
 
 static void start2D(int renderWidth, int renderHeight) {
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glDisable(GL_DEPTH_TEST);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glEnable(GL_BLEND);
+	glEnable(GL_TEXTURE_2D);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glDisable(GL_DEPTH_TEST);
 
-    glDisableClientState(GL_NORMAL_ARRAY);
-    glDisable(GL_LIGHTING);
+	glDisableClientState(GL_NORMAL_ARRAY);
+	glDisable(GL_LIGHTING);
 
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    glOrtho(-renderWidth, renderWidth, -renderHeight, renderHeight, -1, 1);
-    //glOrthof(-1.0f, 1.0f, -1.5f, 1.5f, -1.0f, 1.0f);
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	//glOrtho(-renderWidth, renderWidth, -renderHeight, renderHeight, -1, 1);
+	glOrtho(0, 800, 0, 600, -1, 1);
+	//glOrthof(-1.0f, 1.0f, -1.5f, 1.5f, -1.0f, 1.0f);
 
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
+	glMatrixMode(GL_TEXTURE);
+	glLoadIdentity();
 
-    glMatrixMode(GL_TEXTURE);
-    glLoadIdentity();
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
 }
 
 static void end2D() {
@@ -332,27 +408,70 @@ static void end2D() {
 }
 
 static void printString(int x, int y, font_t * font, const char * txt) {
+	char * p = txt;
+	float cx, cy;
+
+	unsigned short vertices[] = { 0, 0, 16, 0, 16, 16, 0, 16 };
+	unsigned short indices[] = { 0, 1, 2, 0, 2, 3 };
+
+	useTexture(font->texture);
+
+	glPushMatrix();
+	glTranslatef(x, y, 0);
+	glScalef(font->size, font->size, 0);
+
+	while (*p) {
+		cx = (float) (*p % 16) / 16.0f;
+		cy = (float) (*p / 16) / 16.0f;
+
+		vec2_t texcoord[] = { { cx, 1 - cy - 0.0625f }, { cx + 0.0625f, 1 - cy - 0.0625f }, { cx + 0.0625f, 1 - cy }, { cx, 1 - cy } };
+		//glVertexPointer(2, GL_UNSIGNED_SHORT, 0, vertices);
+		//glTexCoordPointer(2, GL_FLOAT, 0, texcoord);
+		//glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, indices);
+
+
+		 glBegin(GL_QUADS);
+		 glTexCoord2f(cx, 1 - cy - 0.0625f); // Texture Coord (Bottom Left)
+		 glVertex2i(0, 0); // Vertex Coord (Bottom Left)
+		 glTexCoord2f(cx + 0.0625f, 1 - cy - 0.0625f); // Texture Coord (Bottom Right)
+		 glVertex2i(16, 0); // Vertex Coord (Bottom Right)
+		 glTexCoord2f(cx + 0.0625f, 1 - cy); // Texture Coord (Top Right)
+		 glVertex2i(16, 16); // Vertex Coord (Top Right)
+		 glTexCoord2f(cx, 1 - cy); // Texture Coord (Top Left)
+		 glVertex2i(0, 16); // Vertex Coord (Top Left)
+		 glEnd();
+
+
+		glTranslatef(font->nCharWidth[*p], 0, 0);
+
+		//x = x + font->nCharWidth[*p];
+		p++;
+	}
+
+	glPopMatrix();
+	glFlush();
 
 }
 
 renderer_t * rendererInitProc() {
-    renderer_t * renderer;
-    renderer = malloc(sizeof(renderer_t));
+	renderer_t * renderer;
+	renderer = malloc(sizeof(renderer_t));
 
-    if (renderer) {
-        renderer->name = "OpenGL Programmable Path";
+	if (renderer) {
+		renderer->name = "OpenGL Programmable Path";
 
-        renderer->init = &init;
-        renderer->register_object = &registerObject;
+		renderer->init = &init;
+		renderer->register_object = &registerObject;
+		renderer->register_texture = &registerTexture;
 
-        renderer->start_3D = &setup3d;
-        renderer->render_object_instance = &render;
-        renderer->end_3D = &end3d;
+		renderer->start_3D = &setup3d;
+		renderer->render_object_instance = &render;
+		renderer->end_3D = &end3d;
 
-        renderer->start_2D = &start2D;
-        renderer->printString = &printString;
-        renderer->end_2D = &end2D;
-    }
+		renderer->start_2D = &start2D;
+		renderer->printString = &printString;
+		renderer->end_2D = &end2D;
+	}
 
-    return renderer;
+	return renderer;
 }

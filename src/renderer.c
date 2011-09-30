@@ -13,6 +13,8 @@
 #include "engine.h"
 #include "renderer.h"
 
+unsigned int frames = 0;
+float timeLeft = 0;
 extern renderer_t * rendererInitProc();
 
 static renderer_t * selectBestRender() {
@@ -51,12 +53,20 @@ BOOL RENDERER_Destroy() {
 }
 
 void REN_Update(float deltaTime) {
+	timeLeft -= deltaTime;
 
+	if (timeLeft <= 0.0f) {
+		engine->framesPerSeconds = frames;
+		frames = 0.0f;
+		timeLeft = 1000;
+	}
 }
 
 void REN_HostFrame() {
+	char fpsText[256];
 	world_object_instance_t * object;
 
+	frames++;
 	object = engine->world->objects;
 
 	if (object) {
@@ -74,10 +84,15 @@ void REN_HostFrame() {
 	}
 
 	engine->renderer->start_2D(engine->renderWidth, engine->renderHeight);
-	engine->renderer->printString(1, 1, engine->defaultFont, "Allo");
+	snprintf(fpsText, 255, "FPS: %d", engine->framesPerSeconds);
+	engine->renderer->printString(1, 1, engine->defaultFont, fpsText);
 	engine->renderer->end_2D();
 }
 
-BOOL REN_MakeAvailable(object_t * obj) {
+BOOL REN_MakeObjectAvailable(object_t * obj) {
 	return engine->renderer->register_object(obj);
+}
+
+BOOL REN_MakeTextureAvailable(texture_t * tex) {
+	return engine->renderer->register_texture(tex);
 }

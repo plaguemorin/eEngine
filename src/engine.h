@@ -56,6 +56,8 @@ typedef struct all_renderer_t {
  * All the engine's structure
  */
 typedef struct all_engine_t {
+	BOOL							isRunning;
+
 	struct lua_State		* 		lua;
 	renderer_t				*		renderer;
 	world_t					*		world;
@@ -64,18 +66,21 @@ typedef struct all_engine_t {
 	unsigned int					renderWidth;
 	unsigned int					renderHeight;
 
-	float							lastRenderTime;
+	unsigned int					framesPerSeconds;
+
+	unsigned int					lastRenderTime;
 	font_t                  *       defaultFont;
 } engine_t;
 
 extern engine_t * engine;
 
 BOOL engine_init(int w, int h);
-
-void engine_update();
+BOOL engine_update();
 void engine_drawframe();
+void engine_shutdown();
 
-#define malloc(x) debug_malloc(x, __FILE__, __LINE__)
-void * debug_malloc(size_t s, const char * file, int line);
+void engine_report_key(unsigned long);
+void engine_report_touch(char, int, int);
+void engine_report_move(int, int);
 
 #endif

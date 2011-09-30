@@ -15,6 +15,7 @@ BOOL RENDERER_Destroy();
 
 void REN_Update(float);
 void REN_HostFrame();
-BOOL REN_MakeAvailable(object_t *);
+BOOL REN_MakeObjectAvailable(object_t *);
+BOOL REN_MakeTextureAvailable(texture_t *);
 
 #endif /* RENDERER_H_ */

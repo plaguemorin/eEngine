@@ -77,7 +77,7 @@ object_t * ENTITY_NewDummyObject() {
 		obj->indices[i] = tindices[i];
 	}
 
-	printf("%s has %u vertices with %u indicies\n", obj->name, obj->num_verticies, obj->num_indices);
+	printf("[ENT] %s has %u vertices with %u indicies\n", obj->name, obj->num_verticies, obj->num_indices);
 
 	return obj;
 }
