@@ -282,6 +282,7 @@ texture_t * loadNativePNG(const char * name) {
 		perror("Unable to load texture: ");
 		return NULL;
 	}
+
 	fread(sig, 1, 8, infile);
 	if (!png_check_sig(sig, 8)) {
 		printf("Bad PNG signature\n");

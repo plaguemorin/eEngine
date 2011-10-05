@@ -16,6 +16,7 @@
 #include "texture.h"
 #include "renderer.h"
 #include "font.h"
+#include "filesystem.h"
 
 engine_t * engine;
 
@@ -29,6 +30,7 @@ BOOL engine_init(int w, int h) {
 	engine->renderHeight = h;
 	engine->renderWidth = w;
 
+	FS_Init();
 	RENDERER_Init(w, h);
 	SCRIPTING_Init();
 	TEX_Init();

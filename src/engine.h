@@ -32,7 +32,7 @@ typedef struct all_renderer_t {
 	BOOL (*init)(int windowWidth, int windowHeight);
 	
 	void (*start_3D)(camera_t * camera);
-	void (*render_object_instance)(world_object_instance_t *);
+	void (*render_object)(object_t * object, matrix_t mat);
 	void (*end_3D)();
 
 	void (*start_2D)(int, int);

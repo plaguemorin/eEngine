@@ -27,7 +27,7 @@ BOOL WORLD_Destroy() {
 }
 
 
-world_object_instance_t * WORLD_AttachObjectToWorld(object_t * obj) {
+world_object_instance_t * WORLD_AttachObjectToWorld(entity_t * obj) {
 	world_object_instance_t * point;
 
 	point = engine->world->objects;

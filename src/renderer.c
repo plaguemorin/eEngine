@@ -5,6 +5,7 @@
  *      Author: plaguemorin
  */
 
+#include <math.h>
 #include <GL/gl.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -16,6 +17,8 @@
 unsigned int frames = 0;
 float timeLeft = 0;
 extern renderer_t * rendererInitProc();
+
+static void render_render_matrix(world_object_instance_t * object, matrix_t mat);
 
 static renderer_t * selectBestRender() {
 	int numAttVert, numUnifVert, numUnifFrag, numVary, textureSize;
@@ -63,7 +66,9 @@ void REN_Update(float deltaTime) {
 }
 
 void REN_HostFrame() {
+	int i;
 	char fpsText[256];
+	matrix_t mat;
 	world_object_instance_t * object;
 
 	frames++;
@@ -74,7 +79,12 @@ void REN_HostFrame() {
 
 		while (object) {
 			if (object->is_active) {
-				engine->renderer->render_object_instance(object);
+				render_render_matrix(object, mat);
+
+				i = object->object->num_objects;
+				while (i--) {
+					engine->renderer->render_object(&object->object->objects[i], mat);
+				}
 			}
 
 			object = object->next;
@@ -90,9 +100,60 @@ void REN_HostFrame() {
 }
 
 BOOL REN_MakeObjectAvailable(object_t * obj) {
-	return engine->renderer->register_object(obj);
+	BOOL outcome;
+	outcome = YES;
+
+	if (obj->material) {
+		if (obj->material->texture_diffuse && !REN_MakeTextureAvailable(obj->material->texture_diffuse)) {
+			printf("[REN] Unable to make texture available\n");
+			outcome = NO;
+		}
+	}
+
+	if (outcome) {
+		engine->renderer->register_object(obj);
+	}
+
+	return outcome;
 }
 
 BOOL REN_MakeTextureAvailable(texture_t * tex) {
-	return engine->renderer->register_texture(tex);
+	if (engine->renderer->register_texture(tex)) {
+/*
+		free(tex->data);
+		tex->data = NULL;
+*/
+		return YES;
+	}
+
+	return NO;
+}
+
+static void render_render_matrix(world_object_instance_t * object, matrix_t mat) {
+	float A, B, C, D, E, F, AD, BD;
+
+	A = cos(object->rotation[0]);
+	B = sin(object->rotation[0]);
+	C = cos(object->rotation[1]);
+	D = sin(object->rotation[1]);
+	E = cos(object->rotation[2]);
+	F = sin(object->rotation[2]);
+
+	AD = A * D;
+	BD = B * D;
+
+	mat[0] = C * E;
+	mat[1] = -C * F;
+	mat[2] = -D;
+	mat[4] = -BD * E + A * F;
+	mat[5] = BD * F + A * E;
+	mat[6] = -B * C;
+	mat[8] = AD * E + B * F;
+	mat[9] = -AD * F + B * E;
+	mat[10] = A * C;
+
+	mat[3] = mat[7] = mat[11] = mat[12] = mat[13] = mat[14] = 0;
+	mat[15] = 1;
+
+	matrixTranslate(mat, object->position[0], object->position[1], object->position[2]);
 }

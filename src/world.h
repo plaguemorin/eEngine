@@ -12,7 +12,7 @@
 
 BOOL WORLD_Init();
 BOOL WORLD_Destroy();
-world_object_instance_t * WORLD_AttachObjectToWorld(object_t *);
+world_object_instance_t * WORLD_AttachObjectToWorld(entity_t *);
 
 
 #endif /* WORLD_H_ */

@@ -39,33 +39,44 @@ typedef struct {
 	vec2_t textureCoord;
 	vec3_t tangent;
 
-	unsigned char padding[64 - sizeof(vec3_t) - sizeof(vec3_t) - sizeof(vec3_t) - sizeof(vec2_t)];} vertex_t;
+/*
+ * TODO: Put weight here so we can animate on the card
+ */
+} vertex_t;
 
-	/**
-	 * Offset of things
-	 */
+/**
+ * Offset of things
+ */
 #define VERTEX_OFFSET_OF_POSITION       offsetof(vertex_t, position)
 #define VERTEX_OFFSET_OF_NORMAL         offsetof(vertex_t, normal)
 #define VERTEX_OFFSET_OF_TANGENT        offsetof(vertex_t, tangent)
 #define VERTEX_OFFSET_OF_TEXTURECOORD   offsetof(vertex_t, textureCoord)
 
-	/**
-	 * 2D Texture Types
-	 */
+/**
+ * 2D Texture Types
+ */
 typedef enum td_texture_type {
-	TEXTURE_TYPE_UNKNOWN, TEXTURE_TYPE_RGB, TEXTURE_TYPE_RGBA,
+	TEXTURE_TYPE_UNKNOWN, TEXTURE_TYPE_RGB, TEXTURE_TYPE_RGBA, TEXTURE_TYPE_BGR, TEXTURE_TYPE_BGRA
 } texture_type_t;
 
 /**
  * 2D Texture
  */
 typedef struct td_texture_t {
+	/* Loaded Data as `type` (RGB or RGBA) */
 	unsigned char * data;
+
+	/* Size of loaded data */
 	unsigned int data_length;
 
+	/* Image information */
 	unsigned int width;
 	unsigned int height;
+
+	/* Bits per pixel, 24 or 32 */
 	unsigned int bpp;
+
+	/* Loaded texture type: RGB, RGBA */
 	texture_type_t type;
 
 	/* Renderer Private Data */
@@ -125,6 +136,19 @@ typedef struct td_box_t {
 } box_t;
 
 /**
+ *
+ */
+typedef struct td_joint_t {
+	char *name;
+
+	int parent;
+	struct td_object_t * parent_joint;
+
+	vec3_t position;
+	quat4_t orientation;
+} object_joint_t;
+
+/**
  * A 3D object is simply the mesh and the material to render
  * this does not have any position as many instance of this 
  * object may exist
@@ -153,8 +177,31 @@ typedef struct td_object_t {
 
 	/* Renderer Private Data */
 	void * renderer_data;
-
 } object_t;
+
+/**
+ * Entities are complete objects with animations
+ */
+typedef struct td_entity_t {
+	/* Name of this enity */
+	char * name;
+
+	/* Number of meshes (objects) this entity has */
+	unsigned short num_objects;
+
+	/* Objects of this entity */
+	object_t * objects;
+
+	/* Number of joints */
+	unsigned short num_joints;
+
+	/* Joints */
+	object_joint_t * joints;
+
+	/* Bounding box */
+	box_t bounding_box;
+
+} entity_t;
 
 /**
  * A light source
@@ -287,7 +334,7 @@ void Quat_convert_to_mat3x3(matrix3x3_t matrix, const quat4_t out);
  */
 typedef struct world_object_instance_t {
 	/* The Object */
-	struct td_object_t * object;
+	entity_t * object;
 
 	/* This instance's transformation */
 	//matrix_t transformation;

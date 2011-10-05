@@ -15,6 +15,8 @@
 #else
 #	include <GL/gl.h>
 #	include <GL/glext.h>
+#	include <GLES2/gl2.h>
+#	include <GLES2/gl2ext.h>
 #endif
 
 #include "engine.h"
@@ -24,11 +26,8 @@
 static matrix_t projectionMatrix;
 static matrix_t modelViewMatrix;
 
-static vec3_t verticesSprite[4] = { { 0, 0, 0 }, { 1, 0, 0 }, { 1, 1, 0 }, { 0, 1, 0 } };
-static vec2_t textureCoordSprite[4] = { { 0, 0 }, { 1, 0 }, { 1, 1 }, { 0, 1 } };
-static unsigned short indicesSprite[6] = { 1, 2, 3, 1, 3, 4 };
-
 static unsigned int last_texture;
+static unsigned int last_vbo;
 
 typedef enum prog_location {
 	OBJECT_MEMLOC_VRAM, OBJECT_MEMLOC_RAM,
@@ -164,8 +163,10 @@ static BOOL init(int w, int h) {
 	glEnable(GL_LIGHTING);
 	glEnable(GL_LIGHT0);
 	glDisable(GL_ALPHA_TEST);
+	/*
 	glEnable(GL_CULL_FACE);
-	glCullFace(GL_BACK);
+	glCullFace(GL_FRONT);
+	*/
 
 	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 	glDisable(GL_TEXTURE_2D);
@@ -180,6 +181,8 @@ static BOOL init(int w, int h) {
 
 	CheckErrorsF("init", "no details");
 	CheckFBStatus();
+
+	last_vbo = last_texture = 0;
 
 	return YES;
 }
@@ -245,12 +248,18 @@ static BOOL registerTexture(texture_t * tex) {
 	switch (tex->type) {
 		case TEXTURE_TYPE_RGB:
 			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, tex->width, tex->height, 0, GL_RGB, GL_UNSIGNED_BYTE, tex->data);
-			glGenerateMipmap(GL_TEXTURE_2D);
 			break;
 
 		case TEXTURE_TYPE_RGBA:
 			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, tex->width, tex->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, tex->data);
-			glGenerateMipmap(GL_TEXTURE_2D);
+			break;
+
+		case TEXTURE_TYPE_BGR:
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, tex->width, tex->height, 0, GL_BGR, GL_UNSIGNED_BYTE, tex->data);
+			break;
+
+		case TEXTURE_TYPE_BGRA:
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, tex->width, tex->height, 0, GL_BGRA, GL_UNSIGNED_BYTE, tex->data);
 			break;
 
 		default:
@@ -260,9 +269,8 @@ static BOOL registerTexture(texture_t * tex) {
 			break;
 	}
 
-	free(tex->data);
-
 	/* Using mipMapping to reduce bandwidth consumption */
+	glGenerateMipmap(GL_TEXTURE_2D);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
@@ -272,7 +280,7 @@ static BOOL registerTexture(texture_t * tex) {
 static void useTexture(texture_t * tex) {
 	renderer_prog_texture_t * texData;
 	if (tex) {
-		texData = tex->renderer_data;
+		texData = (renderer_prog_texture_t *) tex->renderer_data;
 
 		if (texData) {
 			if (last_texture != texData->texId) {
@@ -317,61 +325,44 @@ static void setup3d(camera_t * camera) {
 	 glLightf(GL_LIGHT0, GL_CONSTANT_ATTENUATION, light.constantAttenuation);
 	 glLightf(GL_LIGHT0, GL_LINEAR_ATTENUATION, light.linearAttenuation);
 	 */
+
+	glColor4f(1, 1, 1, 1);
 }
 
-static void render_render_matrix(world_object_instance_t * object) {
-	float A, B, C, D, E, F, AD, BD;
-	matrix_t mat;
-
-	A = cos(object->rotation[0]);
-	B = sin(object->rotation[0]);
-	C = cos(object->rotation[1]);
-	D = sin(object->rotation[1]);
-	E = cos(object->rotation[2]);
-	F = sin(object->rotation[2]);
-
-	AD = A * D;
-	BD = B * D;
-
-	mat[0] = C * E;
-	mat[1] = -C * F;
-	mat[2] = -D;
-	mat[4] = -BD * E + A * F;
-	mat[5] = BD * F + A * E;
-	mat[6] = -B * C;
-	mat[8] = AD * E + B * F;
-	mat[9] = -AD * F + B * E;
-	mat[10] = A * C;
-
-	mat[3] = mat[7] = mat[11] = mat[12] = mat[13] = mat[14] = 0;
-	mat[15] = 1;
-
-	matrixTranslate(mat, object->position[0], object->position[1], object->position[2]);
-	glLoadMatrixf(mat);
-
+static void use_material(material_t * mat) {
+	if (mat->texture_diffuse) {
+		useTexture(mat->texture_diffuse);
+	}
 }
 
-static void render(world_object_instance_t * object) {
+static void render(object_t * object, matrix_t mat) {
 	renderer_prog_object_t * objData;
 
-	objData = object->object->renderer_data;
+	objData = object->renderer_data;
 
-	glPushMatrix();
-	render_render_matrix(object);
-
-	if (objData->memory_location == OBJECT_MEMLOC_VRAM) {
-		glBindBuffer(GL_ARRAY_BUFFER, objData->vboId);
-
-		glNormalPointer(GL_SHORT, sizeof(vertex_t), (char *) (NULL + VERTEX_OFFSET_OF_NORMAL));
-		glTexCoordPointer(2, GL_SHORT, sizeof(vertex_t), (char *) (NULL + VERTEX_OFFSET_OF_TEXTURECOORD));
-		glVertexPointer(3, GL_FLOAT, sizeof(vertex_t), (char *) (NULL + VERTEX_OFFSET_OF_POSITION));
-	} else {
-		glNormalPointer(GL_SHORT, sizeof(vertex_t), object->object->vertices[0].normal);
-		glTexCoordPointer(2, GL_SHORT, sizeof(vertex_t), object->object->vertices[0].textureCoord);
-		glVertexPointer(3, GL_FLOAT, sizeof(vertex_t), object->object->vertices[0].position);
+	if (object->material) {
+		use_material(object->material);
 	}
 
-	glDrawElements(GL_TRIANGLES, object->object->num_indices, GL_UNSIGNED_SHORT, object->object->indices);
+	glPushMatrix();
+	glLoadMatrixf(mat);
+
+	if (objData->memory_location == OBJECT_MEMLOC_VRAM) {
+		if (last_vbo != objData->vboId) {
+			glBindBuffer(GL_ARRAY_BUFFER, objData->vboId);
+			last_vbo = objData->vboId;
+
+			glNormalPointer(GL_FLOAT, sizeof(vertex_t), (char *) (NULL + VERTEX_OFFSET_OF_NORMAL));
+			glTexCoordPointer(2, GL_FLOAT, sizeof(vertex_t), (char *) (NULL + VERTEX_OFFSET_OF_TEXTURECOORD));
+			glVertexPointer(3, GL_FLOAT, sizeof(vertex_t), (char *) (NULL + VERTEX_OFFSET_OF_POSITION));
+		}
+	} else {
+		glNormalPointer(GL_FLOAT, sizeof(vertex_t), object->vertices[0].normal);
+		glTexCoordPointer(2, GL_FLOAT, sizeof(vertex_t), object->vertices[0].textureCoord);
+		glVertexPointer(3, GL_FLOAT, sizeof(vertex_t), object->vertices[0].position);
+	}
+
+	glDrawElements(GL_TRIANGLES, object->num_indices, GL_UNSIGNED_SHORT, object->indices);
 
 	glPopMatrix();
 }
@@ -429,18 +420,16 @@ static void printString(int x, int y, font_t * font, const char * txt) {
 		//glTexCoordPointer(2, GL_FLOAT, 0, texcoord);
 		//glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, indices);
 
-
-		 glBegin(GL_QUADS);
-		 glTexCoord2f(cx, 1 - cy - 0.0625f); // Texture Coord (Bottom Left)
-		 glVertex2i(0, 0); // Vertex Coord (Bottom Left)
-		 glTexCoord2f(cx + 0.0625f, 1 - cy - 0.0625f); // Texture Coord (Bottom Right)
-		 glVertex2i(16, 0); // Vertex Coord (Bottom Right)
-		 glTexCoord2f(cx + 0.0625f, 1 - cy); // Texture Coord (Top Right)
-		 glVertex2i(16, 16); // Vertex Coord (Top Right)
-		 glTexCoord2f(cx, 1 - cy); // Texture Coord (Top Left)
-		 glVertex2i(0, 16); // Vertex Coord (Top Left)
-		 glEnd();
-
+		glBegin(GL_QUADS);
+		glTexCoord2f(cx, 1 - cy - 0.0625f); // Texture Coord (Bottom Left)
+		glVertex2i(0, 0); // Vertex Coord (Bottom Left)
+		glTexCoord2f(cx + 0.0625f, 1 - cy - 0.0625f); // Texture Coord (Bottom Right)
+		glVertex2i(16, 0); // Vertex Coord (Bottom Right)
+		glTexCoord2f(cx + 0.0625f, 1 - cy); // Texture Coord (Top Right)
+		glVertex2i(16, 16); // Vertex Coord (Top Right)
+		glTexCoord2f(cx, 1 - cy); // Texture Coord (Top Left)
+		glVertex2i(0, 16); // Vertex Coord (Top Left)
+		glEnd();
 
 		glTranslatef(font->nCharWidth[*p], 0, 0);
 
@@ -465,7 +454,7 @@ renderer_t * rendererInitProc() {
 		renderer->register_texture = &registerTexture;
 
 		renderer->start_3D = &setup3d;
-		renderer->render_object_instance = &render;
+		renderer->render_object = &render;
 		renderer->end_3D = &end3d;
 
 		renderer->start_2D = &start2D;

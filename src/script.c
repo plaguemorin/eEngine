@@ -66,9 +66,10 @@ static command_t * commands;
 // NATIVE METHOD
 extern unsigned long keySymForString(const char * keyName);
 
-static command_t * NewCommand(char type);
+static command_t * new_command_of_type(char type);
 static void report_errors(lua_State *L, int status);
 static int quit(lua_State *L);
+static int entity_load(lua_State * L);
 static int entity_loadDummy(lua_State * L);
 static int world_add(lua_State * L);
 static int entity_move(lua_State *L);
@@ -105,6 +106,7 @@ BOOL SCRIPTING_Init() {
 	/* Entity */
 	lua_register(L, "entity_move", entity_move);
 	lua_register(L, "entity_loadDummy", entity_loadDummy);
+	lua_register(L, "entity_load", entity_load);
 	lua_register(L, "entity_rotate", entity_rotate);
 
 	nextTime = 0;
@@ -234,7 +236,7 @@ void SCRIPTING_Update(float delta) {
 	}
 }
 
-static command_t * NewCommand(char type) {
+static command_t * new_command_of_type(char type) {
 	command_t * cmd;
 	cmd = commands;
 
@@ -254,13 +256,13 @@ static command_t * NewCommand(char type) {
 
 void SCRIPTING_Key(unsigned long keySym) {
 	command_t * cmd;
-	cmd = NewCommand(COMMAND_TYPE_KEY);
+	cmd = new_command_of_type(COMMAND_TYPE_KEY);
 	cmd->keySym = keySym;
 }
 
 void SCRIPTING_Touch(char buttonNum, int x, int y) {
 	command_t * cmd;
-	cmd = NewCommand(COMMAND_TYPE_TOUCH);
+	cmd = new_command_of_type(COMMAND_TYPE_TOUCH);
 	cmd->buttonNumber = buttonNum;
 	cmd->x = x;
 	cmd->y = y;
@@ -268,7 +270,7 @@ void SCRIPTING_Touch(char buttonNum, int x, int y) {
 
 void SCRIPTING_Move(int dX, int dY) {
 	command_t * cmd;
-	cmd = NewCommand(COMMAND_TYPE_MOVE);
+	cmd = new_command_of_type(COMMAND_TYPE_MOVE);
 	cmd->x = dX;
 	cmd->y = dY;
 }
@@ -281,17 +283,43 @@ static void report_errors(lua_State *L, int status) {
 	}
 }
 
-
 static int quit(lua_State * L) {
 	engine->isRunning = NO;
 	return 0;
 }
 
 static int entity_loadDummy(lua_State * L) {
-	object_t * p;
+	entity_t * p;
 
 	p = ENTITY_NewDummyObject();
-	REN_MakeObjectAvailable(p);
+	REN_MakeObjectAvailable(p->objects);
+
+	lua_pushlightuserdata(L, p);
+
+	return 1;
+}
+
+static int entity_load(lua_State * L) {
+	entity_t * p;
+	const char * path;
+	int i;
+
+	int argc = lua_gettop(L);
+
+	if (argc != 1) {
+		printf("entity_load takes 1 param");
+		return 0;
+	}
+
+	path = lua_tostring(L, -1);
+
+	p = ENTITY_LoadObject(path);
+	if (p) {
+		i = p->num_objects;
+		while (i--) {
+			REN_MakeObjectAvailable(&p->objects[i]);
+		}
+	}
 
 	lua_pushlightuserdata(L, p);
 
@@ -381,7 +409,7 @@ static int entity_rotate(lua_State * L) {
 
 static int camera_set_defaults(lua_State * L) {
 	engine->camera.aspect = (float) engine->renderWidth / (float) engine->renderHeight;
-	engine->camera.zFar = 100.0f;
+	engine->camera.zFar = 1000.0f;
 	engine->camera.zNear = 1.0f;
 	engine->camera.fov = 45.0f;
 
