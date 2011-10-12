@@ -3,10 +3,12 @@
  * 
  * Philippe Lague-Morin
  */
-#ifndef TD_MATH
-#define TD_MATH
+#ifndef TD_MATH_H__
+#define TD_MATH_H__
 
 #include "global.h"
+
+#define MAX_JOINT_PER_VERTEX 4
 
 #define X 0
 #define Y 1
@@ -34,14 +36,16 @@ typedef float quat4_t[4];
  * Basic VERTEX; the base of triangle
  */
 typedef struct {
-	vec3_t position;
-	vec3_t normal;
-	vec2_t textureCoord;
-	vec3_t tangent;
+    vec3_t position;
+    vec3_t normal;
+    vec2_t textureCoord;
+    vec3_t tangent;
 
-/*
- * TODO: Put weight here so we can animate on the card
- */
+    /* The blend factor for each bone/offset matrix */
+    float weights[MAX_JOINT_PER_VERTEX];
+
+    /* Index into the bone/offset matrix array */
+    unsigned short boneId[MAX_JOINT_PER_VERTEX];
 } vertex_t;
 
 /**
@@ -51,78 +55,80 @@ typedef struct {
 #define VERTEX_OFFSET_OF_NORMAL         offsetof(vertex_t, normal)
 #define VERTEX_OFFSET_OF_TANGENT        offsetof(vertex_t, tangent)
 #define VERTEX_OFFSET_OF_TEXTURECOORD   offsetof(vertex_t, textureCoord)
+#define VERTEX_OFFSET_OF_WEIGHTS		offsetof(vertex_t, weights)
+#define VERTEX_OFFSET_OF_BONEID			offsetof(vertex_t, boneId)
 
 /**
  * 2D Texture Types
  */
 typedef enum td_texture_type {
-	TEXTURE_TYPE_UNKNOWN, TEXTURE_TYPE_RGB, TEXTURE_TYPE_RGBA, TEXTURE_TYPE_BGR, TEXTURE_TYPE_BGRA
+    TEXTURE_TYPE_UNKNOWN, TEXTURE_TYPE_RGB, TEXTURE_TYPE_RGBA, TEXTURE_TYPE_BGR, TEXTURE_TYPE_BGRA
 } texture_type_t;
 
 /**
  * 2D Texture
  */
 typedef struct td_texture_t {
-	/* Loaded Data as `type` (RGB or RGBA) */
-	unsigned char * data;
+    /* Loaded Data as `type` (RGB or RGBA) */
+    unsigned char * data;
 
-	/* Size of loaded data */
-	unsigned int data_length;
+    /* Size of loaded data */
+    unsigned int data_length;
 
-	/* Image information */
-	unsigned int width;
-	unsigned int height;
+    /* Image information */
+    unsigned int width;
+    unsigned int height;
 
-	/* Bits per pixel, 24 or 32 */
-	unsigned int bpp;
+    /* Bits per pixel, 24 or 32 */
+    unsigned int bpp;
 
-	/* Loaded texture type: RGB, RGBA */
-	texture_type_t type;
+    /* Loaded texture type: RGB, RGBA */
+    texture_type_t type;
 
-	/* Renderer Private Data */
-	void * renderer_data;
+    /* Renderer Private Data */
+    void * renderer_data;
 } texture_t;
 
 /**
  * Rendering properties
  */
 typedef union td_properties_t {
-	unsigned char props;
-	struct {
-		char has_bumpmapping :1;
-		char has_specular :1;
-		char has_diffuse :1;
-		char has_UNDEF1 :1;
-		char has_UNDEF2 :1;
-		char has_UNDEF3 :1;
-		char has_alpha :1;
-		char has_shadows :1;
-	};
+    unsigned char props;
+    struct {
+        char has_bumpmapping :1;
+        char has_specular :1;
+        char has_diffuse :1;
+        char has_UNDEF1 :1;
+        char has_UNDEF2 :1;
+        char has_UNDEF3 :1;
+        char has_alpha :1;
+        char has_shadows :1;
+    };
 } props_t;
 
 /**
  * Material is the look of an object
  */
 typedef struct td_material_t {
-	/* Name of this material */
-	char * name;
+    /* Name of this material */
+    char * name;
 
-	/* Material Properties */
-	props_t properties;
+    /* Material Properties */
+    props_t properties;
 
-	/* */
-	float shininess;
+    /* */
+    float shininess;
 
-	/* */
-	rgb specular_color;
+    /* */
+    rgb specular_color;
 
-	/* Textures */
-	texture_t * texture_diffuse;
-	texture_t * texture_bump;
-	texture_t * texture_specular;
+    /* Textures */
+    texture_t * texture_diffuse;
+    texture_t * texture_bump;
+    texture_t * texture_specular;
 
-	/* Renderer Private Data */
-	void * renderer_data;
+    /* Renderer Private Data */
+    void * renderer_data;
 } material_t;
 
 /**
@@ -131,21 +137,21 @@ typedef struct td_material_t {
  * measure within which all the points lie.
  */
 typedef struct td_box_t {
-	vec3_t min;
-	vec3_t max;
+    vec3_t min;
+    vec3_t max;
 } box_t;
 
 /**
  *
  */
 typedef struct td_joint_t {
-	char *name;
+    char *name;
 
-	int parent;
-	struct td_object_t * parent_joint;
+    int parent;
+    struct td_object_t * parent_joint;
 
-	vec3_t position;
-	quat4_t orientation;
+    vec3_t position;
+    quat4_t orientation;
 } object_joint_t;
 
 /**
@@ -154,52 +160,52 @@ typedef struct td_joint_t {
  * object may exist
  */
 typedef struct td_object_t {
-	/* Object name this should be unique */
-	char * name;
+    /* Object name this should be unique */
+    char * name;
 
-	/* The look of this object */
-	material_t * material;
+    /* The look of this object */
+    material_t * material;
 
-	/* Object's vertex */
-	vertex_t * vertices;
+    /* Object's vertex */
+    vertex_t * vertices;
 
-	/* Number of verticies */
-	unsigned short num_verticies;
+    /* Number of verticies */
+    unsigned short num_verticies;
 
-	/* Indicies pointing to the verticies */
-	unsigned short * indices;
+    /* Indicies pointing to the verticies */
+    unsigned short * indices;
 
-	/* Number of indicies */
-	unsigned short num_indices;
+    /* Number of indicies */
+    unsigned short num_indices;
 
-	/* Bounding box */
-	box_t bounding_box;
+    /* Bounding box */
+    box_t bounding_box;
 
-	/* Renderer Private Data */
-	void * renderer_data;
+    /* Renderer Private Data */
+    void * renderer_data;
 } object_t;
 
 /**
  * Entities are complete objects with animations
  */
 typedef struct td_entity_t {
-	/* Name of this enity */
-	char * name;
+    /* Name of this enity */
+    char * name;
 
-	/* Number of meshes (objects) this entity has */
-	unsigned short num_objects;
+    /* Number of meshes (objects) this entity has */
+    unsigned short num_objects;
 
-	/* Objects of this entity */
-	object_t * objects;
+    /* Objects of this entity */
+    object_t * objects;
 
-	/* Number of joints */
-	unsigned short num_joints;
+    /* Number of joints */
+    unsigned short num_joints;
 
-	/* Joints */
-	object_joint_t * joints;
+    /* Joints */
+    object_joint_t * joints;
 
-	/* Bounding box */
-	box_t bounding_box;
+    /* Bounding box */
+    box_t bounding_box;
 
 } entity_t;
 
@@ -207,32 +213,32 @@ typedef struct td_entity_t {
  * A light source
  */
 typedef struct td_light_t {
-	/* Light Position */
-	vec4_t position;
+    /* Light Position */
+    vec4_t position;
 
-	/* Where the light points to */
-	vec3_t lookAt;
+    /* Where the light points to */
+    vec3_t lookAt;
 
-	/* The "UP" vector for the light */
-	vec3_t upVector;
+    /* The "UP" vector for the light */
+    vec3_t upVector;
 
-	/* Field-of-view of the light */
-	float fov;
+    /* Field-of-view of the light */
+    float fov;
 
-	/* Ambiant color */
-	vec4_t ambient;
+    /* Ambiant color */
+    vec4_t ambient;
 
-	/* Diffuse color */
-	vec4_t diffuse;
+    /* Diffuse color */
+    vec4_t diffuse;
 
-	/* Specular color */
-	vec4_t specula;
+    /* Specular color */
+    vec4_t specula;
 
-	/* Constant Attenuation */
-	float constantAttenuation;
+    /* Constant Attenuation */
+    float constantAttenuation;
 
-	/* Linear Attenuation */
-	float linearAttenuation;
+    /* Linear Attenuation */
+    float linearAttenuation;
 } light_t;
 
 /**
@@ -240,39 +246,39 @@ typedef struct td_light_t {
  * Normally there should be only one
  */
 typedef struct td_camera_t {
-	/* Position of the camera */
-	vec4_t position;
+    /* Position of the camera */
+    vec4_t position;
 
-	/* Forward direction */
-	vec3_t forward;
+    /* Forward direction */
+    vec3_t forward;
 
-	/* Right direction */
-	vec3_t right;
+    /* Right direction */
+    vec3_t right;
 
-	/* Up vector */
-	vec3_t up;
+    /* Up vector */
+    vec3_t up;
 
-	float pitch;
-	float head;
+    float pitch;
+    float head;
 
-	float aspect;
-	float fov;
-	float zNear;
-	float zFar;
+    float aspect;
+    float fov;
+    float zNear;
+    float zFar;
 } camera_t;
 
 /**
  * Font for 2D HUD
  */
 typedef struct td_font_t {
-	unsigned char nCharWidth[128]; // width of each character
-	unsigned char nMaxWidth; // box width
-	unsigned char nMaxHeight; // box height
-	unsigned int size;
-	float wFrac;
-	float hFrac;
+    unsigned char nCharWidth[128]; // width of each character
+    unsigned char nMaxWidth; // box width
+    unsigned char nMaxHeight; // box height
+    unsigned int size;
+    float wFrac;
+    float hFrac;
 
-	texture_t * texture;
+    texture_t * texture;
 } font_t;
 
 /***************************************************************************************************************************
@@ -333,33 +339,33 @@ void Quat_convert_to_mat3x3(matrix3x3_t matrix, const quat4_t out);
  * Instance of an object
  */
 typedef struct world_object_instance_t {
-	/* The Object */
-	entity_t * object;
+    /* The Object */
+    entity_t * object;
 
-	/* This instance's transformation */
-	//matrix_t transformation;
-	/* This instance's position */
-	vec3_t position;
+    /* This instance's transformation */
+    //matrix_t transformation;
+    /* This instance's position */
+    vec3_t position;
 
-	/* This instance's rotation */
-	vec3_t rotation;
+    /* This instance's rotation */
+    vec3_t rotation;
 
-	/* Should this object be in the collision system ? */
-	BOOL has_collision;
+    /* Should this object be in the collision system ? */
+    BOOL has_collision;
 
-	/* Should we actually render this object ? */
-	BOOL is_active;
+    /* Should we actually render this object ? */
+    BOOL is_active;
 
-	/* The next instance */
-	struct world_object_instance_t * next;
+    /* The next instance */
+    struct world_object_instance_t * next;
 } world_object_instance_t;
 
 /**
  * THE World
  */
 typedef struct world_t {
-	unsigned int num_objects;
-	world_object_instance_t * objects;
+    unsigned int num_objects;
+    world_object_instance_t * objects;
 } world_t;
 
 #endif

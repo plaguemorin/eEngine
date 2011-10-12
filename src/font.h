@@ -11,5 +11,4 @@
 BOOL FONT_Init();
 BOOL FONT_LoadDefaultFont(const char * name);
 
-
 #endif /* FONT_H_ */

@@ -23,91 +23,91 @@ engine_t * engine;
 float E_Sys_Milliseconds();
 
 BOOL engine_init(int w, int h) {
-	engine = malloc(sizeof(engine_t));
-	memset(engine, 0, sizeof(engine_t));
+    engine = malloc(sizeof(engine_t));
+    memset(engine, 0, sizeof(engine_t));
 
-	engine->isRunning = YES;
-	engine->renderHeight = h;
-	engine->renderWidth = w;
+    engine->isRunning = YES;
+    engine->renderHeight = h;
+    engine->renderWidth = w;
 
-	FS_Init();
-	RENDERER_Init(w, h);
-	SCRIPTING_Init();
-	TEX_Init();
-	ENTITY_Init();
-	WORLD_Init();
-	FONT_Init();
+    FS_Init();
+    RENDERER_Init(w, h);
+    SCRIPTING_Init();
+    TEX_Init();
+    ENTITY_Init();
+    WORLD_Init();
+    FONT_Init();
 
-	SCRIPTING_AfterLoaded();
+    SCRIPTING_AfterLoaded();
 
-	return YES;
+    return YES;
 }
 
 void engine_shutdown() {
-	engine->isRunning = NO;
+    engine->isRunning = NO;
 
-	WORLD_Destroy();
-	ENTITY_Destroy();
-	SCRIPTING_Destory();
-	RENDERER_Destroy();
+    WORLD_Destroy();
+    ENTITY_Destroy();
+    SCRIPTING_Destory();
+    RENDERER_Destroy();
 
-	free(engine);
-	engine = NULL;
+    free(engine);
+    engine = NULL;
 }
 
 BOOL engine_update() {
-	float delta;
-	float currentTime;
+    float delta;
+    float currentTime;
 
-	currentTime = E_Sys_Milliseconds();
-	delta = (float)(currentTime - engine->lastRenderTime);
+    currentTime = E_Sys_Milliseconds();
+    delta = (float) (currentTime - engine->lastRenderTime);
 
-	REN_Update(delta);
-	SCRIPTING_Update(delta);
+    REN_Update(delta);
+    SCRIPTING_Update(delta);
 
-	engine->lastRenderTime = currentTime;
+    engine->lastRenderTime = currentTime;
 
-	return engine->isRunning;
+    return engine->isRunning;
 }
 
 void engine_drawframe() {
-	REN_HostFrame();
+    REN_HostFrame();
 }
 
 void engine_report_key(unsigned long keySym) {
-	SCRIPTING_Key(keySym);
+    SCRIPTING_Key(keySym);
 }
 
 void engine_report_touch(char buttonNum, int x, int y) {
-	printf("Button %d pressed at %d, %d\n", buttonNum, x, y);
-	SCRIPTING_Touch(buttonNum, x, y);
+    printf("Button %d pressed at %d, %d\n", buttonNum, x, y);
+    SCRIPTING_Touch(buttonNum, x, y);
 }
 
 void engine_report_move(int deltaX, int deltaY) {
-	SCRIPTING_Move(deltaX, deltaY);
+    SCRIPTING_Move(deltaX, deltaY);
 }
 
 #ifndef WIN32
 #include <sys/time.h>
 float E_Sys_Milliseconds() {
-	struct timeval tp;
-	static int secbase;
+    struct timeval tp;
+    static int secbase;
 
-	gettimeofday(&tp, 0);
+    gettimeofday(&tp, 0);
 
-	if (!secbase) {
-		secbase = tp.tv_sec;
-		return tp.tv_usec / 1000.0f;
-	}
+    if (!secbase) {
+        secbase = tp.tv_sec;
+        return tp.tv_usec / 1000.0f;
+    }
 
-	return (tp.tv_sec - secbase) * 1000.0f + tp.tv_usec / 1000.0f;
+    return (tp.tv_sec - secbase) * 1000.0f + tp.tv_usec / 1000.0f;
 }
 #else
 #include "windows.h"
 #include "MMSystem.h"
 float E_Sys_Milliseconds()
 {
-	return (float)timeGetTime();
+    return (float)timeGetTime();
 }
 #endif
 

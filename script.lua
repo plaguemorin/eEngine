@@ -1,6 +1,6 @@
 
-rot = 0
-rotA = 0
+rot = 0.0
+rotA = 1.57079633
 posX = -90.0
 
 camera_set_defaults()
@@ -22,11 +22,12 @@ set_move_callback("move")
 set_press_callback("press")
 
 function move(dX, dY)
-	
+    rotA = rotA - (dY / 100.0)
+    rot = rot + (dX / 100.0)
 end
 
 function press(button, x, y)
-	
+
 end
 
 function update(delta)
@@ -51,9 +52,9 @@ function rotateBottom()
 end
 
 function moveBack()
-	posX = posX - 0.1
+	posX = posX - 1
 end
 
 function moveForward()
-	posX = posX + 0.1
+	posX = posX + 1
 end

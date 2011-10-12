@@ -1,7 +1,7 @@
 /**
  * Global
  */
- 
+
 #ifndef GLOBAL_H_
 #define GLOBAL_H_
 
@@ -13,6 +13,9 @@
 
 typedef unsigned char BOOL;
 
+#ifndef MAX
+#	define MAX(a,b)			((a)>(b)?(a):(b))
+#endif
 
 #ifndef offsetof
 #define offsetof(type, member)  __builtin_offsetof (type, member)

@@ -16,33 +16,33 @@
 
 BOOL FONT_Init() {
 
-	return FONT_LoadDefaultFont("data/fonts/DEFAULT.png");
+    return FONT_LoadDefaultFont("data/fonts/DEFAULT.png");
 }
 
 BOOL FONT_LoadDefaultFont(const char * name) {
-	texture_t * tex;
+    texture_t * tex;
 
-	engine->defaultFont = malloc(sizeof(font_t));
+    engine->defaultFont = malloc(sizeof(font_t));
 
-	tex = TEX_LoadTexture(name);
-	if (tex) {
-		if (REN_MakeTextureAvailable(tex) == YES) {
-			engine->defaultFont->texture = tex;
-			engine->defaultFont->size = 2;
-			engine->defaultFont->hFrac = (float) (engine->defaultFont->nMaxHeight / (float) tex->height);
-			engine->defaultFont->wFrac = (float) (engine->defaultFont->nMaxWidth / (float) tex->width);
+    tex = TEX_LoadTexture(name);
+    if (tex) {
+        if (REN_MakeTextureAvailable(tex) == YES) {
+            engine->defaultFont->texture = tex;
+            engine->defaultFont->size = 2;
+            engine->defaultFont->hFrac = (float) (engine->defaultFont->nMaxHeight / (float) tex->height);
+            engine->defaultFont->wFrac = (float) (engine->defaultFont->nMaxWidth / (float) tex->width);
 
-			memset(engine->defaultFont->nCharWidth, 0xD, sizeof(engine->defaultFont->nCharWidth) / sizeof(engine->defaultFont->nCharWidth[0]));
+            memset(engine->defaultFont->nCharWidth, 0xD, sizeof(engine->defaultFont->nCharWidth) / sizeof(engine->defaultFont->nCharWidth[0]));
 
-			printf("[FNT] Default font was loaded\n");
-		} else {
-			printf("[FNT] Unable to make texture avail\n");
-			return NO;
-		}
-	} else {
-		printf("[FNT] Unable to load texture\n");
-		return NO;
-	}
+            printf("[FNT] Default font was loaded\n");
+        } else {
+            printf("[FNT] Unable to make texture avail\n");
+            return NO;
+        }
+    } else {
+        printf("[FNT] Unable to load texture\n");
+        return NO;
+    }
 
-	return YES;
+    return YES;
 }
