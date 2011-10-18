@@ -1,0 +1,8 @@
+worldVersion 10
+
+mesh {
+        model models/bob/boblampclean.md5mesh
+        name bob
+        position 0 -30 -50
+        rotation 0 1.57079633 0
+}

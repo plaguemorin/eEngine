@@ -42,7 +42,7 @@ rot = 0.0
 rotA = 1.57079633
 posX = -50.0
 
-i = entity.load("models/altair/altair.obj")
+i = entity.load("data/models/altair/altair.obj")
 entity.move(i, -1.5, -30.0, -60.0)
 
 core.bind('a', 'rotateLeft')
