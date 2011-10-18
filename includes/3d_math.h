@@ -6,8 +6,6 @@
 #ifndef TD_MATH_H__
 #define TD_MATH_H__
 
-#include "global.h"
-
 #define MAX_JOINT_PER_VERTEX 4
 
 #define X 0
@@ -21,6 +19,7 @@
 typedef float vec4_t[4];
 typedef float vec3_t[3];
 typedef float vec2_t[2];
+typedef short vec4s_t[4];
 typedef short vec3s_t[3];
 typedef short vec2s_t[2];
 
@@ -38,7 +37,7 @@ typedef float quat4_t[4];
 typedef struct {
     vec3_t position;
     vec3_t normal;
-    vec2_t textureCoord;
+    vec2s_t textureCoord;
     vec3_t tangent;
 
     /* The blend factor for each bone/offset matrix */
@@ -55,8 +54,8 @@ typedef struct {
 #define VERTEX_OFFSET_OF_NORMAL         offsetof(vertex_t, normal)
 #define VERTEX_OFFSET_OF_TANGENT        offsetof(vertex_t, tangent)
 #define VERTEX_OFFSET_OF_TEXTURECOORD   offsetof(vertex_t, textureCoord)
-#define VERTEX_OFFSET_OF_WEIGHTS		offsetof(vertex_t, weights)
-#define VERTEX_OFFSET_OF_BONEID			offsetof(vertex_t, boneId)
+#define VERTEX_OFFSET_OF_WEIGHTS        offsetof(vertex_t, weights)
+#define VERTEX_OFFSET_OF_BONEID         offsetof(vertex_t, boneId)
 
 /**
  * 2D Texture Types
@@ -189,8 +188,11 @@ typedef struct td_object_t {
  * Entities are complete objects with animations
  */
 typedef struct td_entity_t {
-    /* Name of this enity */
+    /* Name of this entity */
     char * name;
+
+    /* Number of time this entity is in a world object */
+    unsigned short num_references;
 
     /* Number of meshes (objects) this entity has */
     unsigned short num_objects;
@@ -206,7 +208,6 @@ typedef struct td_entity_t {
 
     /* Bounding box */
     box_t bounding_box;
-
 } entity_t;
 
 /**
@@ -355,6 +356,9 @@ typedef struct world_object_instance_t {
 
     /* Should we actually render this object ? */
     BOOL is_active;
+
+    /* Scripting Engine Data */
+    void * script_data;
 
     /* The next instance */
     struct world_object_instance_t * next;

@@ -14,6 +14,8 @@
 
 #include <png.h>
 
+#include "global.h"
+#include "3d_math.h"
 #include "engine.h"
 
 static Display *dpy;

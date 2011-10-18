@@ -10,6 +10,8 @@
 #include <math.h>
 #include <string.h>
 
+#define BUFFER_OFFSET(i) ((char *)NULL + (i))
+
 #if defined(__APPLE__)
 #	include <OpenGLES/ES1/gl.h>
 #	include <OpenGLES/ES1/glext.h>
@@ -18,6 +20,8 @@
 #	include <GLES2/gl2ext.h>
 #endif
 
+#include "global.h"
+#include "3d_math.h"
 #include "engine.h"
 #include "filesystem.h"
 
@@ -79,6 +83,14 @@ static shader_prog_t * currentShader;
 typedef struct renderer_prog_texture_t {
     GLuint texId;
 } renderer_prog_texture_t;
+
+
+GLuint shadowFBOId;
+GLuint shadowMapTextureId;
+
+float shadowMapRation = 1.5f;
+int tWidth;
+int tHeight;
 
 /**
  * Check for OpenGL errors
@@ -337,9 +349,7 @@ static void LoadProgram(shader_prog_t* shaderProg, const char* vertexShaderPath,
 
 static void UseShader(shader_prog_t * shader) {
     currentShader = shader;
-
     glUseProgram(shader->prog);
-    glCheckErrors("Use Program");
 }
 
 static BOOL currentShaderBindVertexAttribPointer(const char * name, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const GLvoid* ptr) {
@@ -347,11 +357,8 @@ static BOOL currentShaderBindVertexAttribPointer(const char * name, GLint size, 
 
     indx = CurrentShaderFind(name);
     if (indx >= 0) {
-        glEnableVertexAttribArray(indx);
-        glCheckErrors("Enable vertex attriv array");
-
         glVertexAttribPointer(indx, size, type, normalized, stride, ptr);
-        glCheckErrors("vap");
+        glEnableVertexAttribArray(indx);
         return TRUE;
     }
 
@@ -364,7 +371,6 @@ static BOOL currentShaderUniformMatrix(const char * name, GLsizei count, GLboole
     indx = CurrentShaderFind(name);
     if (indx >= 0) {
         glUniformMatrix4fv(indx, count, transpose, value);
-        glCheckErrors("4fv");
         return TRUE;
     }
 
@@ -463,7 +469,25 @@ static BOOL CheckFBStatus() {
 
 static BOOL init(int w, int h) {
     glViewport(0, 0, w, h);
-    glClearColor(0.0, 0.0, 0.5, 1.0);
+    glClearColor(0.0f, 0.0f, 0.5f, 1.0f);
+    glEnable(GL_DEPTH_TEST);
+    /*
+    glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LEQUAL);
+    glDepthMask(TRUE);
+    glDisable(GL_STENCIL_TEST);
+    glStencilMask(0xFFFFFFFF);
+    glStencilFunc(GL_EQUAL, 0x00000000, 0x00000001);
+    glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+    glFrontFace(GL_CCW);
+    glCullFace(GL_BACK);
+    glEnable(GL_CULL_FACE);
+    glClearColor(0.0, 0.0, 0.0, 0.0);
+    glClearStencil(0);
+    glDisable(GL_BLEND);
+    glDisable(GL_DITHER);
+    glActiveTexture(GL_TEXTURE0);
+    */
 
     defaultObjectShader = (shader_prog_t *) malloc(sizeof(shader_prog_t));
     if (defaultObjectShader) {
@@ -474,7 +498,34 @@ static BOOL init(int w, int h) {
     if (textObjectShader) {
         LoadProgram(textObjectShader, "data/shaders/v_text.glsl", "data/shaders/f_text.glsl");
     }
+/*
+    GLuint   depthRenderbuffer;
 
+    glGenFramebuffers(1, &shadowFBOId);
+    glBindFramebuffer(GL_FRAMEBUFFER, shadowFBOId);
+
+    glGenTextures(1, &shadowMapTextureId);
+    glBindTexture(GL_TEXTURE_2D, shadowMapTextureId);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, tWidth, tHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, shadowMapTextureId,0);
+    glBindTexture(GL_TEXTURE_2D, -1);
+
+    glGenRenderbuffers(1, &depthRenderbuffer);
+    SCR_CheckErrorsF("CreateFBOandShadowMap", "glGenRenderbuffers");
+
+    glBindRenderbuffer(GL_RENDERBUFFER, depthRenderbuffer);
+    SCR_CheckErrorsF("CreateFBOandShadowMap", "glBindRenderbuffer");
+
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT16, tWidth, tHeight);
+    SCR_CheckErrorsF("CreateFBOandShadowMap", "glRenderbufferStorage");
+
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthRenderbuffer);
+    SCR_CheckErrorsF("CreateFBOandShadowMap", "glFramebufferRenderbuffer");
+    */
     if (!CheckErrorsF("init", "no details")) {
         engine->isRunning = NO;
     }
@@ -532,16 +583,19 @@ static BOOL registerObject(object_t * object) {
     glGenBuffers(1, &objData->vertexVboId);
     glGenBuffers(1, &objData->indiciesVboId);
 
+    UseShader(objData->shader);
+
     if (objData->vertexVboId > 0 && objData->indiciesVboId > 0) {
         glBindBuffer(GL_ARRAY_BUFFER, objData->vertexVboId);
         glBufferData(GL_ARRAY_BUFFER, object->num_verticies * sizeof(vertex_t), object->vertices, GL_STATIC_DRAW);
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
         glCheckErrors("Array Buffer");
 
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, objData->indiciesVboId);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, object->num_indices * sizeof(unsigned short), object->indices, GL_STATIC_DRAW);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
         glCheckErrors("Buffer Data Indices");
+
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
         return YES;
     }
@@ -590,7 +644,6 @@ static BOOL registerTexture(texture_t * tex) {
 
         default:
             printf("[GLES2] Unknown texture format \n");
-            free(tex->data);
             return NO;
             break;
     }
@@ -652,20 +705,21 @@ static void render(object_t * object, matrix_t mat) {
         glBindBuffer(GL_ARRAY_BUFFER, objData->vertexVboId);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, objData->indiciesVboId);
 
-        currentShaderBindVertexAttribPointer("a_vertex", 3, GL_FLOAT, GL_FALSE, sizeof(vertex_t), (char *) NULL + VERTEX_OFFSET_OF_POSITION);
-        currentShaderBindVertexAttribPointer("a_normal", 3, GL_FLOAT, GL_TRUE, sizeof(vertex_t), (char *) NULL + VERTEX_OFFSET_OF_NORMAL);
-        currentShaderBindVertexAttribPointer("a_texcoord0", 2, GL_FLOAT, GL_FALSE, sizeof(vertex_t), (char *) NULL + VERTEX_OFFSET_OF_TEXTURECOORD);
-        //currentShaderBindVertexAttribPointer("a_weight0", 1, GL_FLOAT, GL_FALSE, sizeof(vertex_t), (char *) VERTEX_OFFSET_OF_WEIGHTS);
-        //currentShaderBindVertexAttribPointer("a_boneId0", 1, GL_SHORT, GL_FALSE, sizeof(vertex_t), (char *) VERTEX_OFFSET_OF_BONEID);
+        currentShaderBindVertexAttribPointer("a_vertex", 3, GL_FLOAT, GL_FALSE, sizeof(vertex_t), BUFFER_OFFSET(VERTEX_OFFSET_OF_POSITION));
+        currentShaderBindVertexAttribPointer("a_normal", 3, GL_FLOAT, GL_FALSE, sizeof(vertex_t), BUFFER_OFFSET(VERTEX_OFFSET_OF_NORMAL));
+        currentShaderBindVertexAttribPointer("a_texcoord0", 2, GL_SHORT, GL_FALSE, sizeof(vertex_t), BUFFER_OFFSET(VERTEX_OFFSET_OF_TEXTURECOORD));
+        currentShaderBindVertexAttribPointer("a_weight0", 1, GL_FLOAT, GL_FALSE, sizeof(vertex_t), BUFFER_OFFSET(VERTEX_OFFSET_OF_WEIGHTS));
+        currentShaderBindVertexAttribPointer("a_boneId0", 1, GL_SHORT, GL_FALSE, sizeof(vertex_t), BUFFER_OFFSET(VERTEX_OFFSET_OF_BONEID));
 
         glDrawElements(GL_TRIANGLES, object->num_indices, GL_UNSIGNED_SHORT, 0);
     } else {
         glBindBuffer(GL_ARRAY_BUFFER, 0);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
-        currentShaderBindVertexAttribPointer("a_vertex", 3, GL_FLOAT, GL_FALSE, sizeof(vertex_t), object->vertices->position);
-        //currentShaderBindVertexAttribPointer("a_normal", 3, GL_FLOAT, GL_TRUE, sizeof(vertex_t), object->vertices->normal);
-        currentShaderBindVertexAttribPointer("a_texcoord0", 2, GL_FLOAT, GL_FALSE, sizeof(vertex_t), object->vertices->textureCoord);
+        currentShaderBindVertexAttribPointer("a_vertex", 3, GL_FLOAT, GL_FALSE, sizeof(vertex_t), &object->vertices[0].position[0]);
+        currentShaderBindVertexAttribPointer("a_normal", 2, GL_FLOAT, GL_TRUE, sizeof(vertex_t), object->vertices->normal);
+        currentShaderBindVertexAttribPointer("a_texcoord0", 2, GL_SHORT, GL_FALSE, sizeof(vertex_t), object->vertices->textureCoord);
+
         glDrawElements(GL_TRIANGLES, object->num_indices, GL_UNSIGNED_SHORT, object->indices);
     }
 }

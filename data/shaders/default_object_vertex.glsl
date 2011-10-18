@@ -11,7 +11,6 @@ varying vec3 v_normal;
 
 void main(void)
 {
-   v_texcoord = a_texcoord0.xy;
+   v_texcoord = vec2(a_texcoord0.x / 32767.0, a_texcoord0.y / 32767.0);
    gl_Position = modelViewProjectionMatrix * vec4(a_vertex, 1.0);
-   //gl_Position = vec4(a_vertex.x, a_vertex.y, a_vertex.z - 50.0, 1.0);
 }

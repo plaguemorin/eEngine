@@ -19,6 +19,8 @@
 #	include <GLES2/gl2ext.h>
 #endif
 
+#include "global.h"
+#include "3d_math.h"
 #include "engine.h"
 
 #define DEG_TO_RAD (2.0f*3.14159265f/360.0f)
@@ -366,6 +368,7 @@ static void render(object_t * object, matrix_t mat) {
             glDrawElements(GL_TRIANGLES, object->num_indices, GL_UNSIGNED_SHORT, 0);
         }
     } else {
+        /*
         glBindBuffer(GL_ARRAY_BUFFER, 0);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
@@ -374,6 +377,7 @@ static void render(object_t * object, matrix_t mat) {
         glVertexPointer(3, GL_FLOAT, sizeof(vertex_t), object->vertices[0].position);
 
         glDrawElements(GL_TRIANGLES, object->num_indices, GL_UNSIGNED_SHORT, object->indices);
+        */
     }
 
     glPopMatrix();
@@ -399,6 +403,7 @@ static void start2D(int renderWidth, int renderHeight) {
     glDisable(GL_DEPTH_TEST);
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
     glDisableClientState(GL_NORMAL_ARRAY);
     glDisableClientState(GL_COLOR_ARRAY);

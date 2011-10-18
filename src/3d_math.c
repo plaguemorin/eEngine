@@ -31,8 +31,9 @@
 
 #define PIOVER180       (M_PI / 180.0f)
 
-#include "engine.h"
+#include "global.h"
 #include "3d_math.h"
+#include "engine.h"
 
 /**
  Matrices here are colmn major

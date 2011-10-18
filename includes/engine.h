@@ -7,18 +7,6 @@
 #ifndef ENGINE_H_
 #define ENGINE_H_
 
-#include "global.h"
-#include "3d_math.h"
-
-struct lua_State;
-union td_properties_t;
-struct td_texture_t;
-struct td_material_t;
-struct td_object_t;
-struct td_light_t;
-
-struct world_t;
-
 /**
  * Renderer
  */

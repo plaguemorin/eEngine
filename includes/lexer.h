@@ -8,8 +8,6 @@
 #ifndef LEXER_H_
 #define LEXER_H_
 
-#include "filesystem.h"
-
 void LE_init(filehandle_t *textFile);
 void LE_skipWhiteSpace(void);
 void LE_SkipRestOfLine(void);

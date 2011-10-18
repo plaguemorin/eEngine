@@ -9,15 +9,30 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "global.h"
+#include "3d_math.h"
 #include "engine.h"
 #include "entities.h"
 #include "world.h"
 
 BOOL WORLD_Init() {
-    engine->world = malloc(sizeof(world_t));
+    engine->world = (world_t *) malloc(sizeof(world_t));
     memset(engine->world, 0, sizeof(world_t));
 
+    engine->camera.aspect = (float) engine->renderWidth / (float) engine->renderHeight;
+    engine->camera.zFar = 1000.0f;
+    engine->camera.zNear = 1.0f;
+    engine->camera.fov = 45.0f;
+
+    vectorSet(engine->camera.position, 0, 0, 0);
+    vectorSet(engine->camera.up, 0, 1.0f, 0);
+    vectorSet(engine->camera.forward, 0, 0, -1);
+
     return YES;
+}
+
+void WORLD_Update(float delta) {
+
 }
 
 BOOL WORLD_Destroy() {
@@ -26,27 +41,29 @@ BOOL WORLD_Destroy() {
 }
 
 world_object_instance_t * WORLD_AttachObjectToWorld(entity_t * obj) {
-    world_object_instance_t * point;
+    world_object_instance_t * entity_world_instance;
 
-    point = engine->world->objects;
-    if (point) {
-        while (point->next)
-            point = point->next;
-        point->next = malloc(sizeof(world_object_instance_t));
-        point = point->next;
+    entity_world_instance = engine->world->objects;
+    if (entity_world_instance) {
+        while (entity_world_instance->next)
+            entity_world_instance = entity_world_instance->next;
+        entity_world_instance->next = malloc(sizeof(world_object_instance_t));
+        entity_world_instance = entity_world_instance->next;
     } else {
-        point = malloc(sizeof(world_object_instance_t));
-        engine->world->objects = point;
+        entity_world_instance = malloc(sizeof(world_object_instance_t));
+        engine->world->objects = entity_world_instance;
     }
-    memset(point, 0, sizeof(world_object_instance_t));
+    memset(entity_world_instance, 0, sizeof(world_object_instance_t));
     engine->world->num_objects++;
 
-    point->is_active = TRUE;
-    point->object = obj;
-    point->has_collision = NO;
+    entity_world_instance->is_active = TRUE;
+    entity_world_instance->object = obj;
+    entity_world_instance->has_collision = NO;
 
-    vectorSet(point->position, 0, 0, 0);
-    vectorSet(point->rotation, 0, 0, 0);
+    vectorSet(entity_world_instance->position, 0, 0, 0);
+    vectorSet(entity_world_instance->rotation, 0, 0, 0);
 
-    return point;
+    obj->num_references++;
+
+    return entity_world_instance;
 }

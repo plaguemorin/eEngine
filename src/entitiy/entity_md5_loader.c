@@ -1,18 +1,20 @@
-/**
+/*
+ * entity_md5_loader.c
  *
- *
+ *  Created on: 2011-10-17
+ *      Author: plaguemorin
  */
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #ifndef MAX
-#	define MAX(a,b)		(((a) > (b)) ? (a) : (b))
+#   define MAX(a,b)     (((a) > (b)) ? (a) : (b))
 #endif
 
-#include "engine.h" 
+#include "global.h"
 #include "3d_math.h"
+#include "engine.h"
 #include "filesystem.h"
 #include "lexer.h"
 #include "entities.h"
@@ -36,99 +38,16 @@ typedef struct md5_weight_t {
 } md5_weight_t;
 
 static void cleanUpDoubleQuotes(char* string);
-static object_t * alloc_new_object(const char * name);
-static entity_t * alloc_new_entity(const char * name);
 static void MD5_ReadMesh(entity_t * entity, unsigned int meshNumber);
 static void MD5_ReadJoints(entity_t * entity);
 static void MD5_GenerateSkin(object_t* mesh, object_joint_t* bones, md5_vertex_t * vertex, unsigned int num_weight, md5_weight_t * weight);
 
-/**
- * Allocate a new object with a name
- *
- * Can return null if allocation failed
- */
-static object_t * alloc_new_object(const char * name) {
-    object_t * obj;
-
-    obj = malloc(sizeof(object_t));
-    if (obj) {
-        memset(obj, 0, sizeof(object_t));
-
-        if (name) {
-            obj->name = malloc(sizeof(char) * (strlen(name)));
-
-            if (obj->name) {
-                strcpy(obj->name, name);
-            }
-        }
-    }
-
-    return obj;
-}
-
-/**
- * Allocate a new entitu with a name
- *
- * Can return null if allocation failed
- */
-static entity_t * alloc_new_entity(const char * name) {
-    entity_t * obj;
-
-    obj = malloc(sizeof(entity_t));
-    if (obj) {
-        memset(obj, 0, sizeof(entity_t));
-
-        if (name) {
-            obj->name = malloc(sizeof(char) * (strlen(name)));
-
-            if (obj->name) {
-                strcpy(obj->name, name);
-            }
-        }
-    }
-
-    return obj;
-}
-
-BOOL ENTITY_Init() {
-
-    return YES;
-}
-
-BOOL ENTITY_Update() {
-
-    return YES;
-}
-
-BOOL ENTITY_Destroy() {
-
-    return YES;
-}
-
-/*
- * Loads an entity
- */
-entity_t * ENTITY_LoadObject(const char * path) {
-    filehandle_t * file;
-    entity_t * entity;
+BOOL MD5_LoadMD5(filehandle_t * file, entity_t * entity) {
     int versionNumber = 0;
     unsigned short meshNumber = 0;
 
-    file = FS_OpenFileRead(path);
-    if (!file) {
-        printf("[ENT] Unable to open file %s\n", path);
-        return NULL;
-    }
-
     LE_pushLexer();
     LE_init(file);
-
-    entity = alloc_new_entity(path);
-    if (!entity) {
-        LE_popLexer();
-        FS_Close(file);
-        return NULL;
-    }
 
     /* loop on all the tokens */
     while (LE_hasMoreData()) {
@@ -138,9 +57,9 @@ entity_t * ENTITY_LoadObject(const char * path) {
         if (!strcmp("MD5Version", LE_getCurrentToken())) {
             versionNumber = LE_readReal();
             if (versionNumber != 10) {
-                printf("[ENT] : %s has a bad model version (%d)\n", path, versionNumber);
-                FS_Close(file);
-                return 0;
+                printf("[ENT] : Bad model version (%d)\n", versionNumber);
+                LE_popLexer();
+                return FALSE;
             }
 
             continue;
@@ -170,43 +89,11 @@ entity_t * ENTITY_LoadObject(const char * path) {
         if (!strcmp("joints", LE_getCurrentToken())) {
             MD5_ReadJoints(entity);
         }
-
     }
 
-    return entity;
-}
+    LE_popLexer();
 
-entity_t * ENTITY_NewDummyObject() {
-    object_t * obj;
-    entity_t * entity;
-    int i;
-
-#include "teapot.h"
-
-    obj = alloc_new_object("dummy object");
-
-    obj->num_verticies = (sizeof(vdata) / sizeof(vdata[0]) / 3) + 1;
-    obj->vertices = malloc(1 + sizeof(vertex_t) * obj->num_verticies);
-    for (i = 0; i < obj->num_verticies; i++) {
-        vectorSet(obj->vertices[i].position, vdata[(i*3)], vdata[(i*3)+1], vdata[(i*3)+2]);
-        vectorSet(obj->vertices[i].normal, vnormals[(i*3)], vnormals[(i*3)+1], vnormals[(i*3)+2]);
-        obj->vertices[i].textureCoord[0] = vtext[(i * 2)];
-        obj->vertices[i].textureCoord[1] = vtext[(i * 2) + 1];
-    }
-
-    obj->num_indices = (sizeof(tindices) / sizeof(tindices[0])) + 1;
-    obj->indices = malloc(1 + sizeof(unsigned short) * obj->num_indices);
-    for (i = 0; i <= obj->num_indices; i++) {
-        obj->indices[i] = tindices[i];
-    }
-
-    entity = alloc_new_entity("dummy entity");
-    entity->joints = NULL;
-    entity->num_joints = 0;
-    entity->num_objects = 1;
-    entity->objects = obj;
-
-    return entity;
+    return TRUE;
 }
 
 static void MD5_ReadMesh(entity_t * entity, unsigned int objNum) {
@@ -286,8 +173,8 @@ static void MD5_ReadMesh(entity_t * entity, unsigned int objNum) {
             j = LE_readReal(); /* ID */
 
             if (j < mesh->num_verticies) {
-                mesh->vertices[j].textureCoord[0] = LE_readReal();
-                mesh->vertices[j].textureCoord[1] = LE_readReal();
+                mesh->vertices[j].textureCoord[0] = LE_readReal() * 32767.0f;
+                mesh->vertices[j].textureCoord[1] = LE_readReal() * 32767.0f;
 
                 vertex[j].start = LE_readReal();
                 vertex[j].count = LE_readReal();
@@ -401,6 +288,7 @@ static void MD5_GenerateSkin(object_t* mesh, object_joint_t* joints, md5_vertex_
         normalize(tangentAccumulator);
         vectorCopy(tangentAccumulator, currentVertex->tangent);
 
+        printf("[DEBUG] Vertex %d = %03.5f  %03.5f  %03.5f\n", i, currentVertex->position[0], currentVertex->position[1], currentVertex->position[2]);
         currentVertex++;
     }
 }
@@ -414,4 +302,3 @@ static void cleanUpDoubleQuotes(char* string) {
     }
     *cursor = '\0';
 }
-

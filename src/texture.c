@@ -9,8 +9,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "engine.h"
+#include "global.h"
 #include "3d_math.h"
+#include "engine.h"
 #include "filesystem.h"
 #include "texture.h"
 
@@ -46,7 +47,6 @@ static texture_t * TEX_LoadTGA(const char * path) {
     FILE * fTGA;
     texture_t * texture;
     tga_header_t tgaheader;
-    unsigned int cswap;
 
     fTGA = fopen(path, "rb");
     if (!fTGA) {

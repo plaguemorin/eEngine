@@ -11,6 +11,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "global.h"
+#include "3d_math.h"
 #include "engine.h"
 #include "renderer.h"
 
@@ -23,6 +25,9 @@ static void render_render_matrix(world_object_instance_t * object, matrix_t mat)
 
 static renderer_t * selectBestRender() {
     int numAttVert, numUnifVert, numUnifFrag, numVary, textureSize;
+    int openGlMajorVersion, openGlMinorVersion;
+    glGetIntegerv(GL_MAJOR_VERSION, &openGlMajorVersion);
+    glGetIntegerv(GL_MINOR_VERSION, &openGlMinorVersion);
 
     /* Figure out if we should use GLSL or fixed path */
     glGetIntegerv(GL_MAX_VERTEX_ATTRIBS, &numAttVert);
@@ -36,8 +41,9 @@ static renderer_t * selectBestRender() {
     printf("[KER] GL_MAX_FRAGMENT_UNIFORM_VECTORS = %d \n", numUnifFrag);
     printf("[KER] GL_MAX_VARYING_VECTORS = %d \n", numVary);
     printf("[KER] GL_MAX_TEXTURE_SIZE = %d\n", textureSize);
+    printf("[KER] OpenGL Version = %d.%d\n", openGlMajorVersion, openGlMinorVersion);
 
-    return rendererInitProg();
+    return (numAttVert > 4) ? rendererInitProg() : rendererInitFixed();
 }
 
 BOOL RENDERER_Init(int w, int h) {
@@ -103,18 +109,24 @@ void REN_HostFrame() {
     engine->renderer->end_2D();
 }
 
+BOOL REN_MakeMaterialAvailable(material_t * material) {
+    if (material->texture_diffuse && (material->texture_diffuse->renderer_data == NULL) && !REN_MakeTextureAvailable(material->texture_diffuse)) {
+        printf("[REN] Unable to make texture available\n");
+        return NO;
+    }
+
+    return YES;
+}
+
 BOOL REN_MakeObjectAvailable(object_t * obj) {
     BOOL outcome;
     outcome = YES;
 
     if (obj->material) {
-        if (obj->material->texture_diffuse && !REN_MakeTextureAvailable(obj->material->texture_diffuse)) {
-            printf("[REN] Unable to make texture available\n");
-            outcome = NO;
-        }
+        outcome = REN_MakeMaterialAvailable(obj->material);
     }
 
-    if (outcome) {
+    if (outcome && (obj->renderer_data == NULL)) {
         engine->renderer->register_object(obj);
     }
 

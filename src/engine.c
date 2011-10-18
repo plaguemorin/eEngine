@@ -9,6 +9,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "global.h"
+#include "3d_math.h"
 #include "engine.h"
 #include "script.h"
 #include "entities.h"
@@ -62,8 +64,9 @@ BOOL engine_update() {
     currentTime = E_Sys_Milliseconds();
     delta = (float) (currentTime - engine->lastRenderTime);
 
-    REN_Update(delta);
     SCRIPTING_Update(delta);
+    WORLD_Update(delta);
+    REN_Update(delta);
 
     engine->lastRenderTime = currentTime;
 

@@ -8,9 +8,9 @@
 #ifndef WORLD_H_
 #define WORLD_H_
 
-#include "3d_math.h"
 
 BOOL WORLD_Init();
+void WORLD_Update(float delta);
 BOOL WORLD_Destroy();
 world_object_instance_t * WORLD_AttachObjectToWorld(entity_t *);
 

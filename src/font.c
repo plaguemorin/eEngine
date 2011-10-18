@@ -9,6 +9,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "global.h"
+#include "3d_math.h"
 #include "engine.h"
 #include "renderer.h"
 #include "font.h"

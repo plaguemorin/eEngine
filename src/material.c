@@ -10,6 +10,8 @@
 #include <string.h>
 #include <math.h>
 
+#include "global.h"
+#include "3d_math.h"
 #include "engine.h"
 #include "renderer.h"
 #include "texture.h"
