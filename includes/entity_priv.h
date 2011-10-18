@@ -15,5 +15,6 @@ typedef struct ent_entity_loaded_t {
 } entity_loaded;
 
 BOOL MD5_LoadMD5(filehandle_t * file, entity_t *);
+BOOL OBJ_LoadOBJ(filehandle_t * file, entity_t *);
 
 #endif /* ENTITY_PRIV_H_ */

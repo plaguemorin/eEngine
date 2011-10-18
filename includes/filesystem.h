@@ -9,6 +9,12 @@
 #define FILESYSTEM_H_
 
 typedef struct filehandle_t {
+    /* Full file name (with path) */
+    char * fullPath;
+
+    /* Pointer to the extention of the file */
+    char * fileExtention;
+
     /* Following is used when the file is loaded into memory */
     int bLoaded; /* Was file loaded into memory? */
     unsigned long filesize; /* Size of file data in bytes */

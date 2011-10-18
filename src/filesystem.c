@@ -27,7 +27,6 @@ void FS_Init() {
 }
 
 filehandle_t * FS_OpenFileRead(const char * filePath) {
-    char * fullPath;
     int fullPathSize;
     filehandle_t * fs;
     int pos;
@@ -42,22 +41,22 @@ filehandle_t * FS_OpenFileRead(const char * filePath) {
 
     // Allocate the path
     fullPathSize = strlen(fs_gamedir) + strlen(filePath) + 2;
-    fullPath = malloc(sizeof(char) * (fullPathSize + 1));
-    if (!fullPath) {
+    fs->fullPath = malloc(sizeof(char) * (fullPathSize + 1));
+    if (!fs->fullPath) {
         free(fs);
         printf("[FS] Unable to allocate memory for file path\n");
         return NULL;
     }
 
-    snprintf(fullPath, fullPathSize, "%s/%s", fs_gamedir, filePath);
-    printf("[FS] Loading %s\n", fullPath);
+    snprintf(fs->fullPath, fullPathSize, "%s/%s", fs_gamedir, filePath);
+    printf("[FS] Loading %s\n", fs->fullPath);
 
     // Open the file
-    fs->privateHandle = fopen(fullPath, "rb");
+    fs->privateHandle = fopen(fs->fullPath, "rb");
     if (!fs->privateHandle) {
-        printf("[FS] Unable to load file %s !\n", fullPath);
+        printf("[FS] Unable to load file %s !\n", fs->fullPath);
+        free(fs->fullPath);
         free(fs);
-        free(fullPath);
         return NULL;
     }
 
@@ -71,10 +70,10 @@ filehandle_t * FS_OpenFileRead(const char * filePath) {
     // Read data
     fs->filedata = calloc(fs->filesize + 1, sizeof(char));
     if (fs->filedata == NULL) {
-        printf("[FS] Unable allocate memory for content of %s (%lu bytes) !\n", fullPath, fs->filesize);
+        printf("[FS] Unable allocate memory for content of %s (%lu bytes) !\n", fs->fullPath, fs->filesize);
         fclose(fs->privateHandle);
+        free(fs->fullPath);
         free(fs);
-        free(fullPath);
         return NULL;
     }
     // Update the pointers
@@ -85,14 +84,21 @@ filehandle_t * FS_OpenFileRead(const char * filePath) {
     fs->ptrEnd = fs->ptrStart + fs->filesize;
     fs->bLoaded = 1;
 
+    fs->fileExtention = (char *)(strrchr(fs->fullPath, '.') + 1);
+
     fclose(fs->privateHandle);
     fs->privateHandle = NULL;
-    free(fullPath);
 
     return fs;
 }
 
 void FS_Close(filehandle_t * fhandle) {
+    if (fhandle->fullPath) {
+        free(fhandle->fullPath);
+        fhandle->fullPath = NULL;
+        fhandle->fileExtention = NULL;
+    }
+
     if (fhandle->filedata) {
         free(fhandle->filedata);
         fhandle->filedata = NULL;

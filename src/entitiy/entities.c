@@ -101,6 +101,7 @@ BOOL ENTITY_Destroy() {
 entity_t * ENTITY_LoadObject(const char * path) {
     filehandle_t * file;
     entity_t * entity;
+    BOOL outcome = FALSE;
 
     entity = find_entity(path);
     if (!entity) {
@@ -112,13 +113,23 @@ entity_t * ENTITY_LoadObject(const char * path) {
 
         entity = alloc_new_entity(path);
         if (entity) {
-            if (MD5_LoadMD5(file, entity) != TRUE) {
+            if (strcmp("md5", file->fileExtention) == 0) {
+                outcome = MD5_LoadMD5(file, entity);
+            }
+
+            if (strcmp("obj", file->fileExtention) == 0) {
+                outcome = OBJ_LoadOBJ(file, entity);
+            }
+
+            if (outcome != TRUE) {
                 free(entity->name);
                 free(entity);
 
                 entity = NULL;
             }
         }
+
+        FS_Close(file);
     }
 
     return entity;

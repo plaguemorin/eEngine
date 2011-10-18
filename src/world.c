@@ -41,29 +41,29 @@ BOOL WORLD_Destroy() {
 }
 
 world_object_instance_t * WORLD_AttachObjectToWorld(entity_t * obj) {
-    world_object_instance_t * entity_world_instance;
+    world_object_instance_t * ewi;
 
-    entity_world_instance = engine->world->objects;
-    if (entity_world_instance) {
-        while (entity_world_instance->next)
-            entity_world_instance = entity_world_instance->next;
-        entity_world_instance->next = malloc(sizeof(world_object_instance_t));
-        entity_world_instance = entity_world_instance->next;
+    ewi = engine->world->objects;
+    if (ewi) {
+        while (ewi->next)
+            ewi = ewi->next;
+        ewi->next = malloc(sizeof(world_object_instance_t));
+        ewi = ewi->next;
     } else {
-        entity_world_instance = malloc(sizeof(world_object_instance_t));
-        engine->world->objects = entity_world_instance;
+        ewi = malloc(sizeof(world_object_instance_t));
+        engine->world->objects = ewi;
     }
-    memset(entity_world_instance, 0, sizeof(world_object_instance_t));
+    memset(ewi, 0, sizeof(world_object_instance_t));
     engine->world->num_objects++;
 
-    entity_world_instance->is_active = TRUE;
-    entity_world_instance->object = obj;
-    entity_world_instance->has_collision = NO;
+    ewi->is_active = TRUE;
+    ewi->object = obj;
+    ewi->has_collision = NO;
 
-    vectorSet(entity_world_instance->position, 0, 0, 0);
-    vectorSet(entity_world_instance->rotation, 0, 0, 0);
+    vectorSet(ewi->position, 0, 0, 0);
+    vectorSet(ewi->rotation, 0, 0, 0);
 
     obj->num_references++;
 
-    return entity_world_instance;
+    return ewi;
 }
