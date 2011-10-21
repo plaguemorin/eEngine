@@ -165,8 +165,8 @@ int FS_read(filehandle_t * file, void *buffer, unsigned int nbyte) {
 }
 
 int FS_seek(filehandle_t * file, long int offset) {
-    unsigned int realOffset = MIN(offset, file->ptrEnd - file->ptrCurrent);
-    file->ptrCurrent += realOffset;
+    unsigned int realOffset = MIN(offset, file->filesize);
+    file->ptrCurrent = file->ptrStart + realOffset;
     return realOffset;
 }
 
