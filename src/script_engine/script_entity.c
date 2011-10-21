@@ -24,7 +24,6 @@
 
 static int entity_load(lua_State * L) {
     entity_t * entity;
-    world_object_instance_t * woi;
     const char * path;
     int i;
 
@@ -44,78 +43,13 @@ static int entity_load(lua_State * L) {
         }
     }
 
-    /* Attach it to the world */
-    woi = WORLD_AttachObjectToWorld(entity);
-
-    /* Set script data on */
-    woi->script_data = (world_entity *) malloc(sizeof(world_entity));
-    memset(woi->script_data, 0, sizeof(world_entity));
-
     /* Return it to script */
-    lua_pushlightuserdata(L, woi);
+    lua_pushlightuserdata(L, entity);
 
     return 1;
 }
 
-static int entity_move(lua_State *L) {
-    world_object_instance_t * p;
-    float x, y, z;
-    int argc;
-
-    argc = lua_gettop(L);
-
-    if (argc != 4) {
-        printf("method move_entity takes 4 parameters: <entity>, <x>, <y>, <z>\n");
-        return 0;
-    }
-
-    if (lua_isuserdata(L, -4)) {
-        p = lua_touserdata(L, -4);
-    } else {
-        printf("Well, param 1 was not a user data\n");
-        return 0;
-    }
-
-    if (lua_isnumber(L, -1) && lua_isnumber(L, -2) && lua_isnumber(L, -3)) {
-        z = lua_tonumber(L, -1);
-        y = lua_tonumber(L, -2);
-        x = lua_tonumber(L, -3);
-
-        vectorSet(p->position, x, y, z);
-    }
-
-    return 0;
-}
-
-static int entity_rotate(lua_State * L) {
-    world_object_instance_t * p;
-    float x, y, z;
-    int argc = lua_gettop(L);
-
-    if (argc != 4) {
-        printf("method entity_rotate takes 4 parameters: <entity>, <rot_x>, <rot_y>, <rot_z>\n");
-        return 0;
-    }
-
-    if (lua_isuserdata(L, -4)) {
-        p = lua_touserdata(L, -4);
-    } else {
-        printf("Well, param 1 was not a user data\n");
-        return 0;
-    }
-
-    if (lua_isnumber(L, -1) && lua_isnumber(L, -2) && lua_isnumber(L, -3)) {
-        z = lua_tonumber(L, -1);
-        y = lua_tonumber(L, -2);
-        x = lua_tonumber(L, -3);
-
-        vectorSet(p->rotation, x, y, z);
-    }
-
-    return 0;
-}
-
-static const luaL_Reg entityLib[] = { { "move", entity_move }, { "load", entity_load }, { "rotate", entity_rotate }, { NULL, NULL } };
+static const luaL_Reg entityLib[] = {  { "load", entity_load }, { NULL, NULL } };
 
 int luaopen_dengine_entity(lua_State *L) {
     luaL_register(L, "entity", entityLib);

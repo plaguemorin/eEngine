@@ -470,7 +470,7 @@ static BOOL CheckFBStatus() {
 static BOOL init(int w, int h) {
     glViewport(0, 0, w, h);
     glClearColor(0.0f, 0.0f, 0.5f, 1.0f);
-    glEnable(GL_DEPTH_TEST);
+    //glEnable(GL_DEPTH_TEST);
     /*
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LEQUAL);
@@ -708,8 +708,8 @@ static void render(object_t * object, matrix_t mat) {
         currentShaderBindVertexAttribPointer("a_vertex", 3, GL_FLOAT, GL_FALSE, sizeof(vertex_t), BUFFER_OFFSET(VERTEX_OFFSET_OF_POSITION));
         currentShaderBindVertexAttribPointer("a_normal", 3, GL_FLOAT, GL_FALSE, sizeof(vertex_t), BUFFER_OFFSET(VERTEX_OFFSET_OF_NORMAL));
         currentShaderBindVertexAttribPointer("a_texcoord0", 2, GL_SHORT, GL_FALSE, sizeof(vertex_t), BUFFER_OFFSET(VERTEX_OFFSET_OF_TEXTURECOORD));
-        currentShaderBindVertexAttribPointer("a_weight0", 1, GL_FLOAT, GL_FALSE, sizeof(vertex_t), BUFFER_OFFSET(VERTEX_OFFSET_OF_WEIGHTS));
-        currentShaderBindVertexAttribPointer("a_boneId0", 1, GL_SHORT, GL_FALSE, sizeof(vertex_t), BUFFER_OFFSET(VERTEX_OFFSET_OF_BONEID));
+        //currentShaderBindVertexAttribPointer("a_weight0", 1, GL_FLOAT, GL_FALSE, sizeof(vertex_t), BUFFER_OFFSET(VERTEX_OFFSET_OF_WEIGHTS));
+        //currentShaderBindVertexAttribPointer("a_boneId0", 1, GL_SHORT, GL_FALSE, sizeof(vertex_t), BUFFER_OFFSET(VERTEX_OFFSET_OF_BONEID));
 
         glDrawElements(GL_TRIANGLES, object->num_indices, GL_UNSIGNED_SHORT, 0);
     } else {

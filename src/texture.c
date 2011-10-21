@@ -145,17 +145,13 @@ static texture_t * TEX_LoadTGA(const char * path) {
 texture_t * TEX_LoadTexture(const char * path) {
     texture_t * text;
     /* TODO: Use the file system subsystem */
+    /* TODO: Replace with a command style pattern */
 
-    printf("[TEX] Loading %s\n", path);
     text = loadNativePNG(path);
 
-    if (text) {
-        printf("[TEX] Done (PNG)\n");
-    } else {
+    if (!text) {
         text = TEX_LoadTGA(path);
-        if (text) {
-            printf("[TEX] Done (TGA)\n");
-        } else {
+        if (!text) {
             printf("[TEX] Error\n");
         }
     }

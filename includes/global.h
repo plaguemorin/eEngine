@@ -13,12 +13,16 @@
 
 typedef unsigned char BOOL;
 
-#ifndef MAX
-#	define MAX(a,b)			((a)>(b)?(a):(b))
-#endif
-
 #ifndef offsetof
 #define offsetof(type, member)  __builtin_offsetof (type, member)
+#endif
+
+#ifndef MIN
+#   define MIN(a,b)     (((a) < (b)) ? (a) : (b))
+#endif
+
+#ifndef MAX
+#   define MAX(a,b)     (((a) > (b)) ? (a) : (b))
 #endif
 
 #endif

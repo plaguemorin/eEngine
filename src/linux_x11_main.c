@@ -174,7 +174,7 @@ void ReleasePointer() {
 int main(int argc, char **argv) {
     XEvent event;
     KeySym keySym;
-    Bool done = 0;
+    Bool done;
     int beginX, beginY;
     int butX, butY;
     int drag, pressed;
@@ -287,7 +287,6 @@ texture_t * loadNativePNG(const char * name) {
 
     fread(sig, 1, 8, infile);
     if (!png_check_sig(sig, 8)) {
-        printf("Bad PNG signature\n");
         fclose(infile);
         return NULL;
     }

@@ -1,5 +1,3 @@
-precision highp float;
-
 uniform sampler2D s_baseMap;
 
 varying  vec2 v_texcoord;

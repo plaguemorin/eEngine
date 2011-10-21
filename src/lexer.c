@@ -17,6 +17,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "global.h"
 #include "filesystem.h"
 #include "lexer.h"
 

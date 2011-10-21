@@ -20,6 +20,8 @@
 #include "entities.h"
 #include "material.h"
 
+#include "entity_priv.h"
+
 typedef struct md5_vertex_t {
     int start; /* start weight */
     int count; /* weight count */
@@ -288,7 +290,7 @@ static void MD5_GenerateSkin(object_t* mesh, object_joint_t* joints, md5_vertex_
         normalize(tangentAccumulator);
         vectorCopy(tangentAccumulator, currentVertex->tangent);
 
-        printf("[DEBUG] Vertex %d = %03.5f  %03.5f  %03.5f\n", i, currentVertex->position[0], currentVertex->position[1], currentVertex->position[2]);
+        //printf("[DEBUG] Vertex %d = %03.5f  %03.5f  %03.5f\n", i, currentVertex->position[0], currentVertex->position[1], currentVertex->position[2]);
         currentVertex++;
     }
 }

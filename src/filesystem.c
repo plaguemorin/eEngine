@@ -77,14 +77,14 @@ filehandle_t * FS_OpenFileRead(const char * filePath) {
         return NULL;
     }
     // Update the pointers
-    fs->ptrEnd = fs->ptrStart = fs->ptrCurrent = fs->filedata;
+    fs->ptrStart = fs->ptrCurrent = fs->filedata;
 
     fread(fs->filedata, sizeof(char), fs->filesize, fs->privateHandle);
 
     fs->ptrEnd = fs->ptrStart + fs->filesize;
     fs->bLoaded = 1;
 
-    fs->fileExtention = (char *)(strrchr(fs->fullPath, '.') + 1);
+    fs->fileExtention = (char *) (strrchr(fs->fullPath, '.') + 1);
 
     fclose(fs->privateHandle);
     fs->privateHandle = NULL;
@@ -151,6 +151,31 @@ void FS_DirectoryPath(char *in, char *out) {
 
     while (s != in - 1)
         *out-- = *s--;
+}
+
+int FS_read(filehandle_t * file, void *buffer, unsigned int nbyte) {
+    unsigned int readRead = MIN(file->ptrEnd - file->ptrCurrent, nbyte);
+
+    if (readRead > 0) {
+        memcpy(buffer, file->ptrCurrent, readRead);
+        file->ptrCurrent += readRead;
+    }
+
+    return readRead;
+}
+
+int FS_seek(filehandle_t * file, long int offset) {
+    unsigned int realOffset = MIN(offset, file->ptrEnd - file->ptrCurrent);
+    file->ptrCurrent += realOffset;
+    return realOffset;
+}
+
+unsigned long FS_tell(filehandle_t * file) {
+    return (file->ptrCurrent - file->ptrStart);
+}
+
+BOOL FS_eof(filehandle_t * file) {
+    return (file->ptrCurrent >= file->ptrEnd) ? TRUE : FALSE;
 }
 
 char* FS_GetExtensionAddress(char* string) {

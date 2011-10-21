@@ -21,7 +21,7 @@ float timeLeft = 0;
 extern renderer_t * rendererInitFixed();
 extern renderer_t * rendererInitProg();
 
-static void render_render_matrix(world_object_instance_t * object, matrix_t mat);
+static void render_render_matrix(scene_node_t * object, matrix_t mat);
 
 static renderer_t * selectBestRender() {
     int numAttVert, numUnifVert, numUnifFrag, numVary, textureSize;
@@ -75,31 +75,50 @@ void REN_Update(float deltaTime) {
     }
 }
 
+static void REN_SceneNode(scene_node_t * node, matrix_t parentTransform) {
+    scene_node_t * children;
+    matrix_t mat;
+    matrix_t finalMatrix;
+    entity_t * entity;
+    unsigned int i;
+
+    if (!node->is_active) {
+        return;
+    }
+
+    render_render_matrix(node, mat);
+    matrix_multiply(parentTransform, mat, finalMatrix);
+
+    /* Render actual node */
+    if (node->type == NODE_TYPE_ANIMATED_MESH || node->type == NODE_TYPE_STATIC_MESH) {
+        entity = node->object.mesh;
+        i = entity->num_objects;
+
+        while (i--) {
+            engine->renderer->render_object(&entity->objects[i], finalMatrix);
+        }
+    }
+
+    /* Render children */
+    children = node->child;
+    while (children) {
+        REN_SceneNode(children, finalMatrix);
+        children = children->next;
+    }
+
+}
+
 void REN_HostFrame() {
-    int i;
     char fpsText[256];
     matrix_t mat;
-    world_object_instance_t * object;
 
     frames++;
-    object = engine->world->objects;
 
-    if (object) {
+    matrix_load_identity(mat);
+
+    if (engine->world->objects) {
         engine->renderer->start_3D(&engine->camera);
-
-        while (object) {
-            if (object->is_active) {
-                render_render_matrix(object, mat);
-
-                i = object->object->num_objects;
-                while (i--) {
-                    engine->renderer->render_object(&object->object->objects[i], mat);
-                }
-            }
-
-            object = object->next;
-        }
-
+        REN_SceneNode(engine->world->objects, mat);
         engine->renderer->end_3D();
     }
 
@@ -145,7 +164,7 @@ BOOL REN_MakeTextureAvailable(texture_t * tex) {
     return NO;
 }
 
-static void render_render_matrix(world_object_instance_t * object, matrix_t mat) {
+static void render_render_matrix(scene_node_t * object, matrix_t mat) {
     float A, B, C, D, E, F, AD, BD;
 
     A = cos(object->rotation[0]);

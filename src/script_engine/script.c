@@ -59,6 +59,7 @@ BOOL SCRIPTING_Init() {
     luaopen_dengine_core(L);
     luaopen_dengine_callback(L);
     luaopen_dengine_camera(L);
+    luaopen_dengine_world(L);
 
     nextTime = 0;
     deltaTimeUpdate = 1.0f / 15.0f;

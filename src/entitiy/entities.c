@@ -111,14 +111,19 @@ entity_t * ENTITY_LoadObject(const char * path) {
             return NULL;
         }
 
+        /* TODO: Replace with command-style pattern */
         entity = alloc_new_entity(path);
         if (entity) {
-            if (strcmp("md5", file->fileExtention) == 0) {
+            if (strcmp("md5mesh", file->fileExtention) == 0) {
                 outcome = MD5_LoadMD5(file, entity);
             }
 
             if (strcmp("obj", file->fileExtention) == 0) {
                 outcome = OBJ_LoadOBJ(file, entity);
+            }
+
+            if (strcmp("3ds", file->fileExtention) == 0) {
+                outcome = TDS_Load3DS(file, entity);
             }
 
             if (outcome != TRUE) {

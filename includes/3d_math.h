@@ -333,15 +333,53 @@ void Quat_create_from_mat3x3(const matrix3x3_t matrix, quat4_t out);
 void Quat_convert_to_mat3x3(matrix3x3_t matrix, const quat4_t out);
 
 /***************************************************************************************************************************
- * World Structures 
+ * World Structures
+ * Scene Graph
  **************************************************************************************************************************/
+
+typedef enum scene_graph_node_type {
+    /* There can only be one root node */
+    NODE_TYPE_ROOT,
+
+    /* A dummy transformation scene node */
+    NODE_TYPE_DUMMY,
+
+    /* An entity that does not require animation */
+    NODE_TYPE_STATIC_MESH,
+
+    /* An entity that will be animated with joints */
+    NODE_TYPE_ANIMATED_MESH,
+
+    /* A light source */
+    NODE_TYPE_LIGHT,
+
+    /* Camera */
+    NODE_TYPE_CAMERA,
+
+    /* Node used to create animations */
+    NODE_TYPE_ANIMATOR,
+
+    /* An entity that always point to the camera */
+    NODE_TYPE_BILLBOARD,
+} scene_node_type_t;
 
 /**
  * Instance of an object
  */
-typedef struct world_object_instance_t {
-    /* The Object */
-    entity_t * object;
+typedef struct scene_graph_scene_node_t {
+    char * name;
+
+    /* Depending on the type, this is represent the actual object */
+    union {
+        /* Animated or static mesh */
+        entity_t * mesh;
+
+        /* A Light source */
+        light_t * light;
+    } object;
+
+    /* This node type */
+    scene_node_type_t type;
 
     /* This instance's transformation */
     //matrix_t transformation;
@@ -360,16 +398,22 @@ typedef struct world_object_instance_t {
     /* Scripting Engine Data */
     void * script_data;
 
-    /* The next instance */
-    struct world_object_instance_t * next;
-} world_object_instance_t;
+    /* Parent */
+    struct scene_graph_scene_node_t * parent;
+
+    /* First child */
+    struct scene_graph_scene_node_t * child;
+
+    /* The next instance at the same level */
+    struct scene_graph_scene_node_t * next;
+} scene_node_t;
 
 /**
  * THE World
  */
 typedef struct world_t {
     unsigned int num_objects;
-    world_object_instance_t * objects;
+    scene_node_t * objects;
 } world_t;
 
 #endif

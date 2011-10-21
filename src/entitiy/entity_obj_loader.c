@@ -20,6 +20,8 @@
 #include "entities.h"
 #include "material.h"
 
+#include "entity_priv.h"
+
 typedef struct obj_vertex_t {
     vec3_t vec;
 
@@ -52,6 +54,15 @@ typedef struct obj_mesh_t {
 } obj_mesh_t;
 
 static void OBJ_ReadMesh(obj_mesh_t *mesh) {
+
+}
+
+static void OBJ_LoadMaterial(obj_mesh_t * mesh) {
+    char * materialName;
+
+    materialName = LE_readToken();
+
+    MAT_LoadMaterial(materialName);
 
 }
 
@@ -157,7 +168,7 @@ static obj_texcoord_t * OBJ_FindTextureIndex(obj_mesh_t * mesh, unsigned int ind
     return t;
 }
 
-static void OBJ_Convert(obj_mesh_t * mesh, object_t * object) {
+static void OBJ_Convert(obj_mesh_t * mesh, object_t * object, unsigned int prev_num_vert, unsigned int prev_num_texcoord) {
     unsigned int i;
     obj_vertex_t * vertex;
     obj_texcoord_t * tex;
@@ -181,22 +192,24 @@ static void OBJ_Convert(obj_mesh_t * mesh, object_t * object) {
     face = mesh->faces;
     for (i = 0; i < object->num_indices; i += 3, face = face->next) {
         /* Set texture coord */
-        tex = OBJ_FindTextureIndex(mesh, face->t[0] - 1);
-        object->vertices[face->v[0] - 1].textureCoord[0] = tex->texcoord[0];
-        object->vertices[face->v[0] - 1].textureCoord[1] = tex->texcoord[1];
+        if (mesh->num_texcoord > 0) {
+            tex = OBJ_FindTextureIndex(mesh, face->t[0] - 1 - prev_num_texcoord);
+            object->vertices[face->v[0] - 1 - prev_num_vert].textureCoord[0] = tex->texcoord[0];
+            object->vertices[face->v[0] - 1 - prev_num_vert].textureCoord[1] = tex->texcoord[1];
 
-        tex = OBJ_FindTextureIndex(mesh, face->t[1] - 1);
-        object->vertices[face->v[1] - 1].textureCoord[0] = tex->texcoord[0];
-        object->vertices[face->v[1] - 1].textureCoord[1] = tex->texcoord[1];
+            tex = OBJ_FindTextureIndex(mesh, face->t[1] - 1 - prev_num_texcoord);
+            object->vertices[face->v[1] - 1 - prev_num_vert].textureCoord[0] = tex->texcoord[0];
+            object->vertices[face->v[1] - 1 - prev_num_vert].textureCoord[1] = tex->texcoord[1];
 
-        tex = OBJ_FindTextureIndex(mesh, face->t[2] - 1);
-        object->vertices[face->v[2] - 1].textureCoord[0] = tex->texcoord[0];
-        object->vertices[face->v[2] - 1].textureCoord[1] = tex->texcoord[1];
+            tex = OBJ_FindTextureIndex(mesh, face->t[2] - 1 - prev_num_texcoord);
+            object->vertices[face->v[2] - 1 - prev_num_vert].textureCoord[0] = tex->texcoord[0];
+            object->vertices[face->v[2] - 1 - prev_num_vert].textureCoord[1] = tex->texcoord[1];
+        }
 
         /* Copy indices */
-        object->indices[i + 0] = face->t[0] - 1;
-        object->indices[i + 1] = face->t[1] - 1;
-        object->indices[i + 2] = face->t[2] - 1;
+        object->indices[i + 0] = face->v[0] - 1 - prev_num_vert;
+        object->indices[i + 1] = face->v[1] - 1 - prev_num_vert;
+        object->indices[i + 2] = face->v[2] - 1 - prev_num_vert;
     }
 
 }
@@ -242,6 +255,7 @@ BOOL OBJ_LoadOBJ(filehandle_t * file, entity_t * entity) {
     obj_mesh_t * mesh;
     obj_mesh_t * start;
     unsigned int num_mesh;
+    unsigned int num_prev_vert, num_prev_texcoord;
     unsigned int i;
 
     LE_pushLexer();
@@ -292,6 +306,11 @@ BOOL OBJ_LoadOBJ(filehandle_t * file, entity_t * entity) {
             LE_readReal();
         }
 
+        /* Material */
+        if (!strcmp("usemtl", LE_getCurrentToken())) {
+            OBJ_LoadMaterial(mesh);
+        }
+
         /* Face */
         if (!strcmp("f", LE_getCurrentToken())) {
             OBJ_ReadFace(mesh);
@@ -306,11 +325,15 @@ BOOL OBJ_LoadOBJ(filehandle_t * file, entity_t * entity) {
     memset(entity->objects, 0, entity->num_objects * sizeof(object_t));
 
     mesh = start;
+    num_prev_vert = num_prev_texcoord = 0;
     for (i = 0; i < num_mesh; i++) {
-        OBJ_Convert(mesh, &entity->objects[i]);
+        OBJ_Convert(mesh, &entity->objects[i], num_prev_vert, num_prev_texcoord);
+
+        num_prev_vert += mesh->num_vertex;
+        num_prev_texcoord += mesh->num_texcoord;
         mesh = OBJ_FreeAndReturnNext(mesh);
     }
 
     LE_popLexer();
-    return (mesh == NULL) ? NO : YES;
+    return (start == NULL) ? NO : YES;
 }

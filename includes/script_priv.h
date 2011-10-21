@@ -48,5 +48,6 @@ int luaopen_dengine_entity(lua_State *);
 int luaopen_dengine_core(lua_State *);
 int luaopen_dengine_callback(lua_State *);
 int luaopen_dengine_camera(lua_State *);
+int luaopen_dengine_world(lua_State *);
 
 #endif /* SCRIPT_PRIV_H_ */

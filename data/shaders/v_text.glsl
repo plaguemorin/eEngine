@@ -1,5 +1,3 @@
-#extension GL_EXT_gpu_shader4 : enable
-
 uniform mat4 modelViewProjectionMatrix;
 
 attribute vec3 a_vertex;

@@ -40,4 +40,10 @@ char *FS_FileExtension(const char *in);
 void FS_DirectoryPath(char *in, char *out);
 
 char* FS_GetExtensionAddress(char* string);
+
+int FS_read(filehandle_t *, void *buffer, unsigned int nbyte);
+int FS_seek(filehandle_t *, long int offset);
+unsigned long FS_tell(filehandle_t*);
+BOOL FS_eof(filehandle_t *);
+
 #endif /* FILESYSTEM_H_ */

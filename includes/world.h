@@ -12,6 +12,7 @@
 BOOL WORLD_Init();
 void WORLD_Update(float delta);
 BOOL WORLD_Destroy();
-world_object_instance_t * WORLD_AttachObjectToWorld(entity_t *);
+scene_node_t * WORLD_AttachObjectToWorld(scene_node_t * parent, entity_t *);
+scene_node_t * WORLD_AddDummyNode(scene_node_t * parent);
 
 #endif /* WORLD_H_ */
