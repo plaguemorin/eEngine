@@ -36,6 +36,12 @@ static int TDS_ReadLong(filehandle_t * file) {
     return l;
 }
 
+static float TDS_ReadFloat(filehandle_t * file) {
+    float f;
+    FS_read(file, &f, 4);
+    return f;
+}
+
 static BOOL TDS_ReadChunk(filehandle_t * file, tds_chunk_t * chunk) {
     chunk->chunkId = TDS_ReadShort(file);
     chunk->chunkLen = TDS_ReadLong(file);
@@ -58,13 +64,31 @@ static void TDS_SkipChunk(filehandle_t * file, tds_chunk_t * chunk) {
     FS_seek(file, FS_tell(file) + chunk->chunkLen - 6);
 }
 
+static BOOL TDS_ReadVertex(filehandle_t * file, object_t * mesh) {
+    unsigned short num;
+    unsigned short flags;
+    int i;
+    vec3_t vertex;
+
+    num = TDS_ReadShort(file);
+    for (i = 0; i < num; i++) {
+        vertex[0] = TDS_ReadFloat(file);
+        vertex[1] = TDS_ReadFloat(file);
+        vertex[2] = TDS_ReadFloat(file);
+
+        flags = TDS_ReadShort(file);
+    }
+
+    return TRUE;
+}
+
 BOOL TDS_Load3DS(filehandle_t * file, entity_t * entity) {
     tds_chunk_t chunk;
     char buffer[255];
 
     while (!FS_eof(file)) {
         TDS_ReadChunk(file, &chunk);
-        printf("[3DS] Chunk ID 0x%04X with len %u\n", chunk.chunkId, chunk.chunkLen);
+        printf("[3DS] Chunk ID 0x%04X with length %u\n", chunk.chunkId, chunk.chunkLen);
 
         switch (chunk.chunkId) {
             case 0x4d4d:
@@ -82,6 +106,11 @@ BOOL TDS_Load3DS(filehandle_t * file, entity_t * entity) {
 
             case 0xa000:
                 TDS_ReadStringZ(file, buffer);
+                printf("[3DS] Mat name = %s\n", buffer);
+                break;
+
+            case 0x4110:
+                TDS_ReadVertex(file, NULL);
                 break;
 
             default:

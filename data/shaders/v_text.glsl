@@ -1,3 +1,7 @@
+#ifdef GL_ES
+precision highp float;
+#endif
+
 uniform mat4 modelViewProjectionMatrix;
 
 attribute vec3 a_vertex;

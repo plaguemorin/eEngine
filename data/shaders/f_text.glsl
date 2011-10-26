@@ -1,3 +1,7 @@
+#ifdef GL_ES
+precision highp float;
+#endif
+
 uniform sampler2D s_baseMap;
 
 varying  vec2 v_texcoord;
