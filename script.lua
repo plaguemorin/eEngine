@@ -44,11 +44,11 @@ posX = -50.0
 
 root = world.addDummy(nil)
 
-obj = world.addAnimatedMesh(root, entity.load("data/models/altair/altair.3ds"))
-md3 = world.addAnimatedMesh(root, entity.load("data/models/bob/boblampclean.md5mesh"))
+obj = world.addAnimatedMesh(root, entity.load("data/models/altair/altair.obj"))
+-- md3 = world.addAnimatedMesh(root, entity.load("data/models/bob/boblampclean.md5mesh"))
 
-world.move(obj, -50, 0.0, 0.0)
-world.move(md5, 50, 0.0, 0.0)
+-- world.move(obj, -50, 0.0, 0.0)
+-- world.move(md5, 50, 0.0, 0.0)
 
 world.rotate(obj, rotA, rotA * 2.0, 0)
 

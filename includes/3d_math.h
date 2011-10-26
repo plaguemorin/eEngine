@@ -188,26 +188,11 @@ typedef struct td_object_t {
  * Entities are complete objects with animations
  */
 typedef struct td_entity_t {
-    /* Name of this entity */
-    char * name;
-
-    /* Number of time this entity is in a world object */
-    unsigned short num_references;
-
-    /* Number of meshes (objects) this entity has */
-    unsigned short num_objects;
-
-    /* Objects of this entity */
-    object_t * objects;
-
     /* Number of joints */
     unsigned short num_joints;
 
     /* Joints */
     object_joint_t * joints;
-
-    /* Bounding box */
-    box_t bounding_box;
 } entity_t;
 
 /**
@@ -371,8 +356,11 @@ typedef struct scene_graph_scene_node_t {
 
     /* Depending on the type, this is represent the actual object */
     union {
-        /* Animated or static mesh */
-        entity_t * mesh;
+        /* Animated mesh data (children will be static mesh) */
+        entity_t * weights;
+
+        /* Objects */
+        object_t * mesh;
 
         /* A Light source */
         light_t * light;

@@ -24,7 +24,7 @@
 static entity_loaded * loaded_entities;
 
 /**
- * Allocate a new entitu with a name
+ * Allocate a new entity with a name
  *
  * Can return null if allocation failed
  */

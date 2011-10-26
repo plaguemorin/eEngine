@@ -79,7 +79,7 @@ static void REN_SceneNode(scene_node_t * node, matrix_t parentTransform) {
     scene_node_t * children;
     matrix_t mat;
     matrix_t finalMatrix;
-    entity_t * entity;
+    object_t * entity;
     unsigned int i;
 
     if (!node->is_active) {
@@ -90,13 +90,9 @@ static void REN_SceneNode(scene_node_t * node, matrix_t parentTransform) {
     matrix_multiply(parentTransform, mat, finalMatrix);
 
     /* Render actual node */
-    if (node->type == NODE_TYPE_ANIMATED_MESH || node->type == NODE_TYPE_STATIC_MESH) {
+    if (node->type == NODE_TYPE_STATIC_MESH) {
         entity = node->object.mesh;
-        i = entity->num_objects;
-
-        while (i--) {
-            engine->renderer->render_object(&entity->objects[i], finalMatrix);
-        }
+        engine->renderer->render_object(entity, finalMatrix);
     }
 
     /* Render children */
