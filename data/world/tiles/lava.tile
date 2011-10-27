@@ -1,0 +1,7 @@
+
+tile {
+	name lava
+	block
+	death
+	texture data/textures/lava.png
+}

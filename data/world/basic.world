@@ -1,0 +1,41 @@
+world Basic
+
+// marker <marker name> <X> <Y> <depth>
+marker default 0 1 0
+marker alternate 1 0 0
+marker endpoint 10 1 0
+
+layer {
+	depth 0
+	
+	// tile <X-Position> <Y-Factor> <Tile Type: data/world/tiles/[type].tile>
+	tile 0 1 grass
+	tile 1 1 grass
+	tile 2 1 grass
+	tile 3 1 grass
+	tile 4 1 grass
+	tile 5 1 lava
+	tile 6 1 grass
+	tile 7 1 grass
+	tile 8 1 grass
+	tile 9 1 grass
+	tile 10 1 grass
+}
+
+
+layer {
+	depth 1
+	
+	tile 0 1 lava
+	tile 1 1 lava
+	tile 2 1 lava
+	tile 3 1 lava
+	tile 4 1 grass
+	tile 5 1 grass
+	tile 6 1 grass
+	tile 7 1 lava
+	tile 8 1 lava
+	tile 9 1 lava
+	tile 10 1 lava
+}
+

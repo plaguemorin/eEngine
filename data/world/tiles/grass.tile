@@ -1,0 +1,7 @@
+
+tile {
+	name grass
+	block
+	safe
+	texture data/textures/grass.png
+}

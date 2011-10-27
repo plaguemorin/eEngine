@@ -38,6 +38,11 @@ function moveForward()
 	update()
 end
 
+function playerEnd(entity, marker)
+	-- entity == player
+	-- world.disable(entity)
+end
+
 rot = 0.0
 rotA = 1.57079633
 posX = -50.0
@@ -51,6 +56,12 @@ obj = world.addAnimatedMesh(root, entity.load("data/models/altair/altair.obj"))
 -- world.move(md5, 50, 0.0, 0.0)
 
 world.rotate(obj, rotA, rotA * 2.0, 0)
+
+-- world.load("basic")
+-- camera.set3D()
+-- player.spawnAtMarker("default")
+-- world.addTriggerAtMarker(player, "endpoint", "playerEnd")
+
 
 core.bind('a', 'rotateLeft')
 core.bind('d', 'rotateRight')
