@@ -18,6 +18,7 @@
 #include "lexer.h"
 #include "entities.h"
 #include "material.h"
+#include "scene_node.h"
 
 #include "entity_priv.h"
 
@@ -28,22 +29,11 @@ static entity_loaded * loaded_entities;
  *
  * Can return null if allocation failed
  */
-static entity_t * alloc_new_entity(const char * name) {
-    entity_t * obj;
+static scene_node_t * alloc_new_entity(const char * name) {
+    scene_node_t * obj;
     entity_loaded * el;
 
-    obj = malloc(sizeof(entity_t));
-    if (obj) {
-        memset(obj, 0, sizeof(entity_t));
-
-        if (name) {
-            obj->name = malloc(sizeof(char) * (strlen(name)));
-
-            if (obj->name) {
-                strcpy(obj->name, name);
-            }
-        }
-    }
+    obj = SCENE_NewNode((char *) name, NODE_TYPE_DUMMY);
 
     if (loaded_entities == NULL) {
         el = loaded_entities = (entity_loaded *) malloc(sizeof(entity_loaded));
@@ -58,25 +48,25 @@ static entity_t * alloc_new_entity(const char * name) {
 
     if (el) {
         memset(el, 0, sizeof(entity_loaded));
-        el->entity = obj;
+        el->node_graph_copy = obj;
     } else {
-        free(obj->name);
-        free(obj);
+        SCENE_FreeNode(obj);
         obj = NULL;
+        /* CRASH */
     }
 
     return obj;
 }
 
-static entity_t * find_entity(const char * name) {
+static scene_node_t * find_entity(const char * name) {
     entity_loaded * el;
 
     el = loaded_entities;
-    while (el && el->entity && strcmp(name, el->entity->name) != 0) {
+    while (el && el->name && strcmp(name, el->name) != 0) {
         el = el->next;
     }
 
-    return (el) ? el->entity : NULL;
+    return (el) ? SCENE_DeepCopy(el->node_graph_copy) : NULL;
 }
 
 BOOL ENTITY_Init() {
@@ -91,6 +81,17 @@ BOOL ENTITY_Update() {
 }
 
 BOOL ENTITY_Destroy() {
+    entity_loaded * el;
+    entity_loaded * elNext;
+
+    el = loaded_entities;
+    while (el) {
+        elNext = el->next;
+        SCENE_FreeNode(el->node_graph_copy);
+        free(el->name);
+        free(el);
+        el = elNext;
+    }
 
     return YES;
 }
@@ -98,9 +99,9 @@ BOOL ENTITY_Destroy() {
 /*
  * Loads an entity
  */
-entity_t * ENTITY_LoadObject(const char * path) {
+scene_node_t * ENTITY_LoadObject(const char * path) {
     filehandle_t * file;
-    entity_t * entity;
+    scene_node_t * entity;
     BOOL outcome = FALSE;
 
     entity = find_entity(path);
@@ -127,9 +128,7 @@ entity_t * ENTITY_LoadObject(const char * path) {
             }
 
             if (outcome != TRUE) {
-                free(entity->name);
-                free(entity);
-
+                SCENE_FreeNode(entity);
                 entity = NULL;
             }
         }

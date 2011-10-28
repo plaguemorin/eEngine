@@ -190,7 +190,7 @@ static BOOL init(int w, int h) {
     return YES;
 }
 
-static BOOL registerObject(object_t * object) {
+static BOOL registerObject(mesh_t * object) {
     renderer_prog_object_t * objData;
 
     if (!object) {
@@ -199,7 +199,6 @@ static BOOL registerObject(object_t * object) {
     }
 
     if (object->renderer_data) {
-        printf("[GLES2] Object %s seems already uploaded\n", object->name);
         return NO;
     }
 
@@ -223,7 +222,7 @@ static BOOL registerObject(object_t * object) {
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, object->num_indices * sizeof(unsigned short), object->indices, GL_STATIC_DRAW);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
-    CheckErrorsF("UploadObjectToGPU", object->name);
+    CheckErrorsF("UploadObjectToGPU", "");
 
     return YES;
 }
@@ -343,7 +342,7 @@ static void use_material(material_t * mat) {
     }
 }
 
-static void render(object_t * object, matrix_t mat) {
+static void render(mesh_t * object, matrix_t mat) {
     renderer_prog_object_t * objData;
 
     objData = object->renderer_data;
@@ -419,7 +418,6 @@ static void end2D() {
 static void printString(int x, int y, font_t * font, const char * txt) {
     char * p = (char *) txt;
     float cx, cy;
-    int i, j;
 
     unsigned short indices[] = { 0, 1, 2, 0, 2, 3 };
 

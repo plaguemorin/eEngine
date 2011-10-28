@@ -21,7 +21,7 @@ typedef struct all_renderer_t {
     BOOL (*shutdown)();
 
     void (*start_3D)(camera_t * camera);
-    void (*render_object)(object_t * object, matrix_t mat);
+    void (*render_object)(mesh_t * object, matrix_t mat);
     void (*end_3D)();
 
     void (*start_2D)(int, int);
@@ -34,8 +34,8 @@ typedef struct all_renderer_t {
     BOOL (*register_material)(struct td_material_t *);
     BOOL (*unregister_material)(struct td_material_t *);
 
-    BOOL (*register_object)(struct td_object_t *);
-    BOOL (*unregister_object)(struct td_object_t *);
+    BOOL (*register_object)(struct td_mesh_t *);
+    BOOL (*unregister_object)(struct td_mesh_t *);
 
     BOOL (*register_light)(struct td_light_t *);
     BOOL (*unregister_light)(struct td_light_t *);

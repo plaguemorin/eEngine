@@ -14,11 +14,11 @@
 #include "engine.h"
 #include "script.h"
 #include "entities.h"
-#include "world.h"
 #include "texture.h"
 #include "renderer.h"
 #include "font.h"
 #include "filesystem.h"
+#include "world.h"
 
 engine_t * engine;
 

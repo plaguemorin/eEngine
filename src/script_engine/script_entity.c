@@ -23,30 +23,8 @@
 #include "script_priv.h"
 
 static int entity_load(lua_State * L) {
-    entity_t * entity;
-    const char * path;
-    int i;
 
-    if (lua_gettop(L) != 1) {
-        printf("entity_load takes 1 param");
-        return 0;
-    }
-
-    path = lua_tostring(L, -1);
-
-    /* Load the Object and make the mesh available to the renderer */
-    entity = ENTITY_LoadObject(path);
-    if (entity) {
-        i = entity->num_objects;
-        while (i--) {
-            REN_MakeObjectAvailable(&entity->objects[i]);
-        }
-    }
-
-    /* Return it to script */
-    lua_pushlightuserdata(L, entity);
-
-    return 1;
+    return 0;
 }
 
 static const luaL_Reg entityLib[] = {  { "load", entity_load }, { NULL, NULL } };

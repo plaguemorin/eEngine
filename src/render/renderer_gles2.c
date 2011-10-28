@@ -534,7 +534,7 @@ static BOOL init(int w, int h) {
     return YES;
 }
 
-static BOOL unregisterObject(object_t * object) {
+static BOOL unregisterObject(mesh_t * object) {
     renderer_prog_object_t * objData;
 
     if (object && object->renderer_data) {
@@ -557,7 +557,7 @@ static BOOL unregisterObject(object_t * object) {
     return TRUE;
 }
 
-static BOOL registerObject(object_t * object) {
+static BOOL registerObject(mesh_t * object) {
     renderer_prog_object_t * objData;
 
     if (!object) {
@@ -566,7 +566,7 @@ static BOOL registerObject(object_t * object) {
     }
 
     if (object->renderer_data) {
-        printf("[GLES2] Object %s seems already uploaded\n", object->name);
+        printf("[GLES2] Object seems already uploaded\n");
         return NO;
     }
 
@@ -680,7 +680,7 @@ static void setup3d(camera_t * camera) {
     Perspective(camera->fov, camera->aspect, camera->zNear, camera->zFar, projectionMatrix);
 }
 
-static void render(object_t * object, matrix_t mat) {
+static void render(mesh_t * object, matrix_t mat) {
     matrix_t tmp;
     renderer_prog_object_t * objData;
 

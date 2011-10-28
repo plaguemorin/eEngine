@@ -19,6 +19,7 @@
 #include "lexer.h"
 #include "entities.h"
 #include "material.h"
+#include "scene_node.h"
 
 #include "entity_priv.h"
 
@@ -40,12 +41,14 @@ typedef struct md5_weight_t {
 } md5_weight_t;
 
 static void cleanUpDoubleQuotes(char* string);
-static void MD5_ReadMesh(entity_t * entity, unsigned int meshNumber);
-static void MD5_ReadJoints(entity_t * entity);
-static void MD5_GenerateSkin(object_t* mesh, object_joint_t* bones, md5_vertex_t * vertex, unsigned int num_weight, md5_weight_t * weight);
+static void MD5_ReadMesh(scene_node_t *, unsigned int meshNumber, object_joint_t * joints);
+static void MD5_ReadJoints(unsigned int num_joints, object_joint_t * joints);
+static void MD5_GenerateSkin(mesh_t* mesh, object_joint_t* bones, md5_vertex_t * vertex, unsigned int num_weight, md5_weight_t * weight);
 
-BOOL MD5_LoadMD5(filehandle_t * file, entity_t * entity) {
+BOOL MD5_LoadMD5(filehandle_t * file, scene_node_t * entity) {
     int versionNumber = 0;
+    object_joint_t * joints;
+    unsigned int num_joints = 0;
     unsigned short meshNumber = 0;
 
     LE_pushLexer();
@@ -69,44 +72,44 @@ BOOL MD5_LoadMD5(filehandle_t * file, entity_t * entity) {
 
         /* Number of objects */
         if (!strcmp("numMeshes", LE_getCurrentToken())) {
-            entity->num_objects = LE_readReal();
-            entity->objects = (object_t *) malloc(entity->num_objects * sizeof(object_t));
+            LE_readReal();
             continue;
         }
 
         /* Number of "bones" */
         if (!strcmp("numJoints", LE_getCurrentToken())) {
-            entity->num_joints = LE_readReal();
-            entity->joints = (object_joint_t *) malloc(entity->num_joints * sizeof(object_joint_t));
+            num_joints = LE_readReal();
+            joints = (object_joint_t *) malloc(num_joints * sizeof(object_joint_t));
             continue;
         }
 
         /* A Mesh was found */
         if (!strcmp("mesh", LE_getCurrentToken())) {
-            MD5_ReadMesh(entity, meshNumber++);
+            MD5_ReadMesh(entity, meshNumber++, joints);
             continue;
         }
 
         /* Joints */
         if (!strcmp("joints", LE_getCurrentToken())) {
-            MD5_ReadJoints(entity);
+            MD5_ReadJoints(num_joints, joints);
         }
     }
 
     LE_popLexer();
+    free(joints);
 
     return TRUE;
 }
 
-static void MD5_ReadMesh(entity_t * entity, unsigned int objNum) {
-    object_t * mesh;
+static void MD5_ReadMesh(scene_node_t * node, unsigned int objNum, object_joint_t * joints) {
+    mesh_t * mesh;
     md5_vertex_t * vertex;
     md5_weight_t * weight;
     int j, numWeight, maxWeightPerVertex;
 
     maxWeightPerVertex = 0;
-    mesh = &entity->objects[objNum];
-    memset(mesh, 0, sizeof(object_t));
+    mesh = node->object.mesh;
+    memset(mesh, 0, sizeof(mesh_t));
     LE_readToken(); /* { */
 
     while (strcmp("}", LE_getCurrentToken())) {
@@ -201,20 +204,20 @@ static void MD5_ReadMesh(entity_t * entity, unsigned int objNum) {
     }
 
     /* Convert the mesh to a known model */
-    MD5_GenerateSkin(mesh, entity->joints, vertex, numWeight, weight);
+    MD5_GenerateSkin(mesh, joints, vertex, numWeight, weight);
     free(vertex);
     free(weight);
 }
 
-static void MD5_ReadJoints(entity_t * entity) {
+static void MD5_ReadJoints(unsigned int num_joints, object_joint_t * joints) {
     unsigned int i;
     char * token;
     object_joint_t * joint;
 
     LE_readToken(); /* { */
 
-    for (i = 0; i <= entity->num_joints - 1; i++) {
-        joint = &entity->joints[i];
+    for (i = 0; i <= num_joints - 1; i++) {
+        joint = &joints[i];
 
         /* Read & Copy joint name */
         LE_readToken();
@@ -225,7 +228,7 @@ static void MD5_ReadJoints(entity_t * entity) {
         }
 
         joint->parent = LE_readReal();
-        joint->parent_joint = (object_t *) &entity->joints[joint->parent];
+        joint->parent_joint = (object_joint_t *) &joints[joint->parent];
 
         joint->position[0] = LE_readReal();
         joint->position[1] = LE_readReal();
@@ -240,7 +243,7 @@ static void MD5_ReadJoints(entity_t * entity) {
     LE_readToken(); /* } */
 }
 
-static void MD5_GenerateSkin(object_t* mesh, object_joint_t* joints, md5_vertex_t * vertex, unsigned int num_weight, md5_weight_t * weights) {
+static void MD5_GenerateSkin(mesh_t* mesh, object_joint_t* joints, md5_vertex_t * vertex, unsigned int num_weight, md5_weight_t * weights) {
     md5_weight_t * w;
     object_joint_t * bone;
     vertex_t* currentVertex;

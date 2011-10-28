@@ -22,7 +22,6 @@ layer {
 	tile 10 1 grass
 }
 
-
 layer {
 	depth 1
 	

@@ -76,10 +76,9 @@ void REN_Update(float deltaTime) {
 }
 
 static void REN_SceneNode(scene_node_t * node, matrix_t parentTransform) {
-    scene_node_t * children;
     matrix_t mat;
     matrix_t finalMatrix;
-    object_t * entity;
+    mesh_t * entity;
     unsigned int i;
 
     if (!node->is_active) {
@@ -96,10 +95,8 @@ static void REN_SceneNode(scene_node_t * node, matrix_t parentTransform) {
     }
 
     /* Render children */
-    children = node->child;
-    while (children) {
-        REN_SceneNode(children, finalMatrix);
-        children = children->next;
+    for (i = 0; i < node->num_children; i++) {
+        REN_SceneNode(node->child[i], finalMatrix);
     }
 
 }
@@ -112,9 +109,9 @@ void REN_HostFrame() {
 
     matrix_load_identity(mat);
 
-    if (engine->world->objects) {
+    if (engine->world->root_node) {
         engine->renderer->start_3D(&engine->camera);
-        REN_SceneNode(engine->world->objects, mat);
+        REN_SceneNode(engine->world->root_node, mat);
         engine->renderer->end_3D();
     }
 
@@ -133,7 +130,7 @@ BOOL REN_MakeMaterialAvailable(material_t * material) {
     return YES;
 }
 
-BOOL REN_MakeObjectAvailable(object_t * obj) {
+BOOL REN_MakeObjectAvailable(mesh_t * obj) {
     BOOL outcome;
     outcome = YES;
 

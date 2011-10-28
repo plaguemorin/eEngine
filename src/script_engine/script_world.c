@@ -80,70 +80,20 @@ static int node_rotate(lua_State * L) {
     return 0;
 }
 
-static int node_addanimesh(lua_State * L) {
-    scene_node_t * woi;
-    scene_node_t * attachTo;
-    entity_t * entity;
+static int node_addmesh(lua_State * L) {
+    int argc;
 
-    if (lua_gettop(L) != 2) {
-        printf("addAnimatedMesh takes 2 params");
-        return 0;
-    }
+    argc = lua_gettop(L);
 
-    if (lua_isuserdata(L, -1)) {
-        entity = (entity_t *) lua_touserdata(L, -1);
-    } else {
-        printf("[SCRIPT] node_addanimesh: Well, param 2 was not a user data\n");
-        return 0;
-    }
 
-    if (lua_isuserdata(L, -2)) {
-        attachTo = (scene_node_t *) lua_touserdata(L, -2);
-    } else {
-        printf("[SCRIPT] node_addanimesh: Well, param 1 was not a user data\n");
-        return 0;
-    }
-
-    /* Attach it to the world */
-    woi = WORLD_AttachObjectToWorld(attachTo, entity);
-
-    /* Set script data on */
-    woi->script_data = (world_entity *) malloc(sizeof(world_entity));
-    memset(woi->script_data, 0, sizeof(world_entity));
-
-    /* Return it to script */
-    lua_pushlightuserdata(L, woi);
-
-    return 1;
+    return 0;
 }
 
 static int node_dummy(lua_State * L) {
-    scene_node_t * woi;
-    scene_node_t * attachTo;
-
-    if (lua_gettop(L) != 1) {
-        printf("addDummy takes 1 params");
-        return 0;
-    }
-
-    if (lua_isuserdata(L, -1)) {
-        attachTo = (scene_node_t *) lua_touserdata(L, -1);
-    } else if (lua_isnil(L, -1)) {
-        attachTo = NULL;
-    } else {
-        printf("[SCRIPT] addDummy: Well, param 1 was not a user data\n");
-        return 0;
-    }
-
-    woi = WORLD_AddDummyNode(attachTo);
-
-    /* Return it to script */
-    lua_pushlightuserdata(L, woi);
-
-    return 1;
+    return 0;
 }
 
-static const luaL_Reg entityLib[] = { { "move", node_move }, { "rotate", node_rotate }, { "addAnimatedMesh", node_addanimesh }, { "addDummy", node_dummy }, { NULL, NULL } };
+static const luaL_Reg entityLib[] = { { "move", node_move }, { "rotate", node_rotate }, { "addMesh", node_addmesh }, { "addDummy", node_dummy }, { NULL, NULL } };
 
 int luaopen_dengine_world(lua_State *L) {
     luaL_register(L, "world", entityLib);

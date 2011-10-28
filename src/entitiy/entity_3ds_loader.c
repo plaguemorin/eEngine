@@ -16,6 +16,7 @@
 #include "lexer.h"
 #include "entities.h"
 #include "material.h"
+#include "scene_node.h"
 
 #include "entity_priv.h"
 
@@ -71,7 +72,7 @@ static void TDS_SkipChunk(filehandle_t * file, tds_chunk_t * chunk) {
     FS_seek(file, FS_tell(file) + chunk->chunkLen - 6);
 }
 
-static BOOL TDS_ReadVertex(filehandle_t * file, object_t * mesh) {
+static BOOL TDS_ReadVertex(filehandle_t * file, mesh_t * mesh) {
     int i;
 
     mesh->num_verticies = TDS_ReadShort(file);
@@ -86,7 +87,7 @@ static BOOL TDS_ReadVertex(filehandle_t * file, object_t * mesh) {
     return TRUE;
 }
 
-static BOOL TDS_ReadIndex(filehandle_t * file, object_t * mesh) {
+static BOOL TDS_ReadIndex(filehandle_t * file, mesh_t * mesh) {
     int i;
 
     mesh->num_indices = TDS_ReadShort(file) * 3;
@@ -103,11 +104,11 @@ static BOOL TDS_ReadIndex(filehandle_t * file, object_t * mesh) {
     return TRUE;
 }
 
-static BOOL TDS_ReadTextureCoord(filehandle_t * file, object_t * mesh) {
+static BOOL TDS_ReadTextureCoord(filehandle_t * file, mesh_t * mesh) {
     int i;
 
     if (TDS_ReadShort(file) != mesh->num_verticies) {
-        printf("[3DS] Model '%s' has an error\n", mesh->name);
+        printf("[3DS] Model has an error\n");
         return FALSE;
     }
     for (i = 0; i < mesh->num_verticies; i++) {
@@ -119,13 +120,13 @@ static BOOL TDS_ReadTextureCoord(filehandle_t * file, object_t * mesh) {
     return TRUE;
 }
 
-static BOOL TDS_ReadMaterialGroup(filehandle_t * file, object_t * mesh) {
+static BOOL TDS_ReadMaterialGroup(filehandle_t * file, mesh_t * mesh) {
     char buffer[255];
     short num;
     int i;
 
     TDS_ReadStringZ(file, buffer);
-    printf("[3DS] Mesh '%s' has association with '%s'\n", mesh->name, buffer);
+    printf("[3DS] Mesh has association with '%s'\n", buffer);
 
     num = TDS_ReadShort(file);
     for (i = 0; i < num; i++) {
@@ -136,14 +137,10 @@ static BOOL TDS_ReadMaterialGroup(filehandle_t * file, object_t * mesh) {
     return TRUE;
 }
 
-BOOL TDS_Load3DS(filehandle_t * file, entity_t * entity) {
+BOOL TDS_Load3DS(filehandle_t * file, scene_node_t * entity) {
     tds_chunk_t chunk;
-    object_t * currentObject;
-    material_t * currentMaterial;
+    scene_node_t * currentNode;
     char buffer[255];
-
-    entity->objects = NULL;
-    entity->num_objects = 0;
 
     while (!FS_eof(file)) {
         TDS_ReadChunk(file, &chunk);
@@ -161,20 +158,10 @@ BOOL TDS_Load3DS(filehandle_t * file, entity_t * entity) {
             break;
 
         case 0x4000:
-            entity->num_objects++;
-            if (!entity->objects) {
-                entity->objects = (object_t *) malloc(entity->num_objects * sizeof(object_t));
-            } else {
-                entity->objects = (object_t *) realloc(entity->objects, entity->num_objects * sizeof(object_t));
-            }
-            currentObject = &entity->objects[entity->num_objects - 1];
-            memset(currentObject, 0, sizeof(object_t));
-
             TDS_ReadStringZ(file, buffer);
-            currentObject->name = malloc(sizeof(char) * (strlen(buffer) + 1));
-            strcpy(currentObject->name, buffer);
+            currentNode = SCENE_NewNodeWithParent(entity, buffer, NODE_TYPE_STATIC_MESH);
 
-            printf("[3DS] Reading %s\n", currentObject->name);
+            printf("[3DS] Reading %s\n", currentNode->name);
             break;
 
         case 0xa000:
@@ -183,19 +170,19 @@ BOOL TDS_Load3DS(filehandle_t * file, entity_t * entity) {
             break;
 
         case 0x4110:
-            TDS_ReadVertex(file, currentObject);
+            TDS_ReadVertex(file, currentNode->object.mesh);
             break;
 
         case 0x4120:
-            TDS_ReadIndex(file, currentObject);
+            TDS_ReadIndex(file, currentNode->object.mesh);
             break;
 
         case 0x4140:
-            TDS_ReadTextureCoord(file, currentObject);
+            TDS_ReadTextureCoord(file, currentNode->object.mesh);
             break;
 
         case 0x4130:
-            TDS_ReadMaterialGroup(file, currentObject);
+            TDS_ReadMaterialGroup(file, currentNode->object.mesh);
             break;
 
         default:

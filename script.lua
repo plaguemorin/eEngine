@@ -4,43 +4,43 @@ function q()
 end
 
 function update()
-	world.rotate(root, rotA, rot, 0)
-	world.move(root, 0, -30.0, posX)
+    world.rotate(root, rotA, rot, 0)
+    world.move(root, 0, -30.0, posX)
 end
 
 function rotateLeft()
-	rot = rot + 0.1
-	update()
+    rot = rot + 0.1
+    update()
 end
 
 function rotateRight()
-	rot = rot - 0.1
-	update()
+    rot = rot - 0.1
+    update()
 end
 
 function rotateTop()
-	rotA = rotA - 0.1
-	update()
+    rotA = rotA - 0.1
+    update()
 end
 
 function rotateBottom()
-	rotA = rotA + 0.1
-	update()
+    rotA = rotA + 0.1
+    update()
 end
 
 function moveBack()
-	posX = posX - 1
-	update()
+    posX = posX - 1
+    update()
 end
 
 function moveForward()
-	posX = posX + 1
-	update()
+    posX = posX + 1
+    update()
 end
 
 function playerEnd(entity, marker)
-	-- entity == player
-	-- world.disable(entity)
+    -- entity == player
+    -- world.disable(entity)
 end
 
 rot = 0.0
@@ -49,11 +49,8 @@ posX = -50.0
 
 root = world.addDummy(nil)
 
-obj = world.addAnimatedMesh(root, entity.load("data/models/altair/altair.obj"))
--- md3 = world.addAnimatedMesh(root, entity.load("data/models/bob/boblampclean.md5mesh"))
-
--- world.move(obj, -50, 0.0, 0.0)
--- world.move(md5, 50, 0.0, 0.0)
+obj = world.addMesh(root, "data/models/altair/altair.obj")
+-- data/models/bob/boblampclean.md5mesh
 
 world.rotate(obj, rotA, rotA * 2.0, 0)
 

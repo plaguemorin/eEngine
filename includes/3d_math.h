@@ -147,7 +147,7 @@ typedef struct td_joint_t {
     char *name;
 
     int parent;
-    struct td_object_t * parent_joint;
+    struct td_joint_t * parent_joint;
 
     vec3_t position;
     quat4_t orientation;
@@ -158,23 +158,20 @@ typedef struct td_joint_t {
  * this does not have any position as many instance of this 
  * object may exist
  */
-typedef struct td_object_t {
-    /* Object name this should be unique */
-    char * name;
-
+typedef struct td_mesh_t {
     /* The look of this object */
     material_t * material;
 
     /* Object's vertex */
     vertex_t * vertices;
 
-    /* Number of verticies */
+    /* Number of vertices */
     unsigned short num_verticies;
 
-    /* Indicies pointing to the verticies */
+    /* Indices pointing to the vertices */
     unsigned short * indices;
 
-    /* Number of indicies */
+    /* Number of indices */
     unsigned short num_indices;
 
     /* Bounding box */
@@ -182,7 +179,7 @@ typedef struct td_object_t {
 
     /* Renderer Private Data */
     void * renderer_data;
-} object_t;
+} mesh_t;
 
 /**
  * Entities are complete objects with animations
@@ -334,24 +331,13 @@ typedef enum scene_graph_node_type {
 
     /* An entity that will be animated with joints */
     NODE_TYPE_ANIMATED_MESH,
-
-    /* A light source */
-    NODE_TYPE_LIGHT,
-
-    /* Camera */
-    NODE_TYPE_CAMERA,
-
-    /* Node used to create animations */
-    NODE_TYPE_ANIMATOR,
-
-    /* An entity that always point to the camera */
-    NODE_TYPE_BILLBOARD,
 } scene_node_type_t;
 
 /**
  * Instance of an object
  */
 typedef struct scene_graph_scene_node_t {
+    /* A friendly name for this node */
     char * name;
 
     /* Depending on the type, this is represent the actual object */
@@ -360,7 +346,7 @@ typedef struct scene_graph_scene_node_t {
         entity_t * weights;
 
         /* Objects */
-        object_t * mesh;
+        mesh_t * mesh;
 
         /* A Light source */
         light_t * light;
@@ -377,10 +363,10 @@ typedef struct scene_graph_scene_node_t {
     /* This instance's rotation */
     vec3_t rotation;
 
-    /* Should this object be in the collision system ? */
-    BOOL has_collision;
+    /* Maximum coordinates of this and child nodes */
+    box_t bounding_box;
 
-    /* Should we actually render this object ? */
+    /* Should we actually process this object ? */
     BOOL is_active;
 
     /* Scripting Engine Data */
@@ -389,19 +375,18 @@ typedef struct scene_graph_scene_node_t {
     /* Parent */
     struct scene_graph_scene_node_t * parent;
 
-    /* First child */
-    struct scene_graph_scene_node_t * child;
+    /* Children */
+    unsigned int num_children;
 
-    /* The next instance at the same level */
-    struct scene_graph_scene_node_t * next;
+    /* Child */
+    struct scene_graph_scene_node_t ** child;
 } scene_node_t;
 
 /**
  * THE World
  */
 typedef struct world_t {
-    unsigned int num_objects;
-    scene_node_t * objects;
+    scene_node_t * root_node;
 } world_t;
 
 #endif

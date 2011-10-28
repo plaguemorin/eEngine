@@ -19,6 +19,7 @@
 #include "lexer.h"
 #include "entities.h"
 #include "material.h"
+#include "scene_node.h"
 
 #include "entity_priv.h"
 
@@ -168,7 +169,7 @@ static obj_texcoord_t * OBJ_FindTextureIndex(obj_mesh_t * mesh, unsigned int ind
     return t;
 }
 
-static void OBJ_Convert(obj_mesh_t * mesh, object_t * object, unsigned int prev_num_vert, unsigned int prev_num_texcoord) {
+static void OBJ_Convert(obj_mesh_t * mesh, mesh_t * object, unsigned int prev_num_vert, unsigned int prev_num_texcoord) {
     unsigned int i;
     obj_vertex_t * vertex;
     obj_texcoord_t * tex;
@@ -251,9 +252,10 @@ static obj_mesh_t * OBJ_FreeAndReturnNext(obj_mesh_t * mesh) {
     return next;
 }
 
-BOOL OBJ_LoadOBJ(filehandle_t * file, entity_t * entity) {
+BOOL OBJ_LoadOBJ(filehandle_t * file, scene_node_t * rootNode) {
     obj_mesh_t * mesh;
     obj_mesh_t * start;
+    scene_node_t * aNode;
     unsigned int num_mesh;
     unsigned int num_prev_vert, num_prev_texcoord;
     unsigned int i;
@@ -320,14 +322,11 @@ BOOL OBJ_LoadOBJ(filehandle_t * file, entity_t * entity) {
     }
 
     /* Convert num_mesh from OBJ format to internal format */
-    entity->num_objects = num_mesh;
-    entity->objects = (object_t *) malloc(entity->num_objects * sizeof(object_t));
-    memset(entity->objects, 0, entity->num_objects * sizeof(object_t));
-
     mesh = start;
     num_prev_vert = num_prev_texcoord = 0;
     for (i = 0; i < num_mesh; i++) {
-        OBJ_Convert(mesh, &entity->objects[i], num_prev_vert, num_prev_texcoord);
+        aNode = SCENE_NewNodeWithParent(rootNode, mesh->name, NODE_TYPE_STATIC_MESH);
+        OBJ_Convert(mesh, aNode->object.mesh, num_prev_vert, num_prev_texcoord);
 
         num_prev_vert += mesh->num_vertex;
         num_prev_texcoord += mesh->num_texcoord;

@@ -55,6 +55,8 @@ static void report_errors(lua_State *L, int status);
 BOOL SCRIPTING_Init() {
     lua_State *L = luaL_newstate();
 
+    luaL_openlibs(L); /* Load Lua libraries */
+
     luaopen_dengine_entity(L);
     luaopen_dengine_core(L);
     luaopen_dengine_callback(L);
