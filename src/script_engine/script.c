@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdarg.h>
 #include <math.h>
 
 #include "global.h"
@@ -123,49 +124,49 @@ void SCRIPTING_Update(float delta) {
 
     while (commands) {
         switch (commands->type) {
-            case COMMAND_TYPE_KEY:
-                kn = keybindings;
-                while (kn && kn->keySym != commands->keySym) {
-                    kn = kn->next;
+        case COMMAND_TYPE_KEY:
+            kn = keybindings;
+            while (kn && kn->keySym != commands->keySym) {
+                kn = kn->next;
+            }
+
+            if (kn) {
+                lua_getglobal(engine->lua, kn->function);
+                status = lua_pcall(engine->lua, 0, 0, 0);
+                if (status != 0) {
+                    report_errors(engine->lua, status);
                 }
+            }
+            break;
 
-                if (kn) {
-                    lua_getglobal(engine->lua, kn->function);
-                    status = lua_pcall(engine->lua, 0, 0, 0);
-                    if (status != 0) {
-                        report_errors(engine->lua, status);
-                    }
+        case COMMAND_TYPE_MOVE:
+            if (moveMethodName[0] != 0) {
+                /* function to be called */
+                lua_getglobal(engine->lua, moveMethodName);
+                lua_pushnumber(engine->lua, commands->x);
+                lua_pushnumber(engine->lua, commands->y);
+
+                status = lua_pcall(engine->lua, 2, 0, 0);
+                if (status != 0) {
+                    report_errors(engine->lua, status);
                 }
-                break;
+            }
+            break;
 
-            case COMMAND_TYPE_MOVE:
-                if (moveMethodName[0] != 0) {
-                    /* function to be called */
-                    lua_getglobal(engine->lua, moveMethodName);
-                    lua_pushnumber(engine->lua, commands->x);
-                    lua_pushnumber(engine->lua, commands->y);
+        case COMMAND_TYPE_TOUCH:
+            if (buttonPressedMethodName[0] != 0) {
+                /* function to be called */
+                lua_getglobal(engine->lua, buttonPressedMethodName);
+                lua_pushnumber(engine->lua, commands->buttonNumber);
+                lua_pushnumber(engine->lua, commands->x);
+                lua_pushnumber(engine->lua, commands->y);
 
-                    status = lua_pcall(engine->lua, 2, 0, 0);
-                    if (status != 0) {
-                        report_errors(engine->lua, status);
-                    }
+                status = lua_pcall(engine->lua, 3, 0, 0);
+                if (status != 0) {
+                    report_errors(engine->lua, status);
                 }
-                break;
-
-            case COMMAND_TYPE_TOUCH:
-                if (buttonPressedMethodName[0] != 0) {
-                    /* function to be called */
-                    lua_getglobal(engine->lua, buttonPressedMethodName);
-                    lua_pushnumber(engine->lua, commands->buttonNumber);
-                    lua_pushnumber(engine->lua, commands->x);
-                    lua_pushnumber(engine->lua, commands->y);
-
-                    status = lua_pcall(engine->lua, 3, 0, 0);
-                    if (status != 0) {
-                        report_errors(engine->lua, status);
-                    }
-                }
-                break;
+            }
+            break;
         }
 
         cmdNext = commands->next;
@@ -235,5 +236,91 @@ static void report_errors(lua_State *L, int status) {
         lua_pop(L, 1);
         // remove error message
     }
+}
+
+/**
+ * Our wrapper function (let us call it call_va) receives the name of the function to be called,
+ * a string describing the types of the arguments and results, then the list of arguments, and
+ * finally a list of pointers to variables to store the results; it handles all the details of
+ * the API. With this function, we could write our previous example simply as
+ *
+ * SCRIPTING_CallFunction("f", "dd>d", x, y, &z);
+ * where the string "dd>d" means "two arguments of type double, one result of type double".
+ * This descriptor can use the letters `d´ for double, `i´ for integer, and `s´ for strings;
+ * a `>´ separates arguments from the results. If the function has no results, the `>´ is
+ * optional.
+ */
+void SCRIPTING_CallFunction(lua_State *L, const char *func, const char *sig, ...) {
+    va_list vl;
+    int narg, nres; /* number of arguments and results */
+
+    va_start(vl, sig);
+    lua_getglobal(L, func);
+    /* get function */
+
+    /* push arguments */
+    narg = 0;
+    while (*sig) { /* push arguments */
+        switch (*sig++) {
+
+        case 'd': /* double argument */
+            lua_pushnumber(L, va_arg(vl, double));
+            break;
+
+        case 'i': /* int argument */
+            lua_pushnumber(L, va_arg(vl, int));
+            break;
+
+        case 's': /* string argument */
+            lua_pushstring(L, va_arg(vl, char *));
+            break;
+
+        case '>':
+            goto endwhile;
+
+        default:
+            luaL_error(L, "invalid option (%c)", *(sig - 1));
+            break;
+        }
+        narg++;
+        luaL_checkstack(L, 1, "too many arguments");
+    }
+    endwhile:
+
+    /* do the call */
+    nres = strlen(sig); /* number of expected results */
+    if (lua_pcall(L, narg, nres, 0) != 0) /* do the call */
+        luaL_error(L, "error running function `%s': %s", func, lua_tostring(L, -1));
+
+    /* retrieve results */
+    nres = -nres; /* stack index of first result */
+    while (*sig) { /* get results */
+        switch (*sig++) {
+
+        case 'd': /* double result */
+            if (!lua_isnumber(L, nres))
+                luaL_error(L, "wrong result type");
+            *va_arg(vl, double *) = lua_tonumber(L, nres);
+            break;
+
+        case 'i': /* int result */
+            if (!lua_isnumber(L, nres))
+                luaL_error(L, "wrong result type");
+            *va_arg(vl, int *) = (int) lua_tonumber(L, nres);
+            break;
+
+        case 's': /* string result */
+            if (!lua_isstring(L, nres))
+                luaL_error(L, "wrong result type");
+            *va_arg(vl, const char **) = lua_tostring(L, nres);
+            break;
+
+        default:
+            luaL_error(L, "invalid option (%c)", *(sig - 1));
+            break;
+        }
+        nres++;
+    }
+    va_end(vl);
 }
 

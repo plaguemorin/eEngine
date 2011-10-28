@@ -43,13 +43,15 @@ function playerEnd(entity, marker)
     -- world.disable(entity)
 end
 
+world.test("allo", 1, 2, 3)
+
 rot = 0.0
 rotA = 1.57079633
 posX = -50.0
 
-root = world.addDummy(nil)
+root = world.addNodeDummy()
 
-obj = world.addMesh(root, "data/models/altair/altair.obj")
+obj = world.addNodeMesh(root, "data/models/altair/altair.obj")
 -- data/models/bob/boblampclean.md5mesh
 
 world.rotate(obj, rotA, rotA * 2.0, 0)

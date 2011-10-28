@@ -19,6 +19,7 @@
 #include "entities.h"
 #include "renderer.h"
 #include "world.h"
+#include "scene_node.h"
 
 #include "script_priv.h"
 
@@ -81,19 +82,46 @@ static int node_rotate(lua_State * L) {
 }
 
 static int node_addmesh(lua_State * L) {
-    int argc;
+    size_t size;
 
-    argc = lua_gettop(L);
+    luaL_checklstring(L, 1, &size);
 
 
     return 0;
 }
 
 static int node_dummy(lua_State * L) {
+    scene_node_t * node;
+    size_t strSize;
+    const char * name;
+
+    if (!lua_isnil(L, 1)) {
+        name = luaL_checklstring(L, 1, &strSize);
+    } else {
+        name = NULL;
+    }
+
+    node = SCENE_NewNode(name, NODE_TYPE_DUMMY);
+
     return 0;
 }
 
-static const luaL_Reg entityLib[] = { { "move", node_move }, { "rotate", node_rotate }, { "addMesh", node_addmesh }, { "addDummy", node_dummy }, { NULL, NULL } };
+static int node_test(lua_State *L) {
+    size_t size;
+    int a,b,c;
+    const char * string;
+
+    string = luaL_checklstring(L, 1, &size);
+    a = luaL_checkinteger(L, 2);
+    b = luaL_checkinteger(L, 3);
+    c = luaL_checkinteger(L, 4);
+
+    printf("test(\"%s\", %d, %d, %d);\n", string, a, b, c);
+
+    return 0;
+}
+
+static const luaL_Reg entityLib[] = { {"test", node_test}, { "move", node_move }, { "rotate", node_rotate }, { "addNodeMesh", node_addmesh }, { "addNodeDummy", node_dummy }, { NULL, NULL } };
 
 int luaopen_dengine_world(lua_State *L) {
     luaL_register(L, "world", entityLib);

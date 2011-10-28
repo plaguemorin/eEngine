@@ -44,6 +44,8 @@ extern char buttonPressedMethodName[256];
 extern char moveMethodName[256];
 extern keybinding_t * keybindings;
 
+void SCRIPTING_CallFunction(lua_State *L, const char *func, const char *sig, ...);
+
 int luaopen_dengine_entity(lua_State *);
 int luaopen_dengine_core(lua_State *);
 int luaopen_dengine_callback(lua_State *);
