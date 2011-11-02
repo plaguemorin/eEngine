@@ -11,11 +11,13 @@
 void LE_init(filehandle_t *textFile);
 void LE_skipWhiteSpace(void);
 void LE_SkipRestOfLine(void);
+char * LE_readUntilEndOfLineToken(void);
 char* LE_readToken(void);
 char* LE_getCurrentToken();
 float LE_readReal(void);
 int LE_hasMoreData(void);
 void LE_SetWhiteCharValue(char c, char value);
+int LE_IsAtEndOfLine(void);
 
 void LE_popLexer();
 void LE_pushLexer();

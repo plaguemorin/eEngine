@@ -14,28 +14,32 @@
 #include "engine.h"
 #include "scene_node.h"
 
-scene_node_t * SCENE_NewNode(char * name, scene_node_type_t type) {
+void SCENE_InitializeNode(scene_node_t * new_scene_node, const char * name, scene_node_type_t type) {
+    memset(new_scene_node, 0, sizeof(scene_node_t));
+    new_scene_node->is_active = TRUE;
+
+    if (name) {
+        new_scene_node->name = (char *) malloc(sizeof(char) * (strlen(name) + 1));
+        if (new_scene_node->name) {
+            strcpy(new_scene_node->name, name);
+        }
+    }
+
+    new_scene_node->type = type;
+    switch (new_scene_node->type) {
+        case NODE_TYPE_STATIC_MESH:
+            new_scene_node->object.mesh = (mesh_t *) malloc(sizeof(mesh_t));
+            break;
+    }
+}
+
+scene_node_t * SCENE_NewNode(const char * name, scene_node_type_t type) {
     scene_node_t * new_scene_node;
 
     new_scene_node = (scene_node_t*) malloc(sizeof(scene_node_t));
 
     if (new_scene_node) {
-        memset(new_scene_node, 0, sizeof(scene_node_t));
-        new_scene_node->is_active = TRUE;
-
-        if (name) {
-            new_scene_node->name = (char *) malloc(sizeof(char) * (strlen(name) + 1));
-            if (new_scene_node->name) {
-                strcpy(new_scene_node->name, name);
-            }
-        }
-
-        new_scene_node->type = type;
-        switch (new_scene_node->type) {
-            case NODE_TYPE_STATIC_MESH:
-                new_scene_node->object.mesh = (mesh_t *) malloc(sizeof(mesh_t));
-                break;
-        }
+        SCENE_InitializeNode(new_scene_node, name, type);
     } else {
         /* CRASH */
 
@@ -44,7 +48,7 @@ scene_node_t * SCENE_NewNode(char * name, scene_node_type_t type) {
     return new_scene_node;
 }
 
-scene_node_t * SCENE_NewNodeWithParent(scene_node_t * parent, char * name, scene_node_type_t type) {
+scene_node_t * SCENE_NewNodeWithParent(scene_node_t * parent, const char * name, scene_node_type_t type) {
     scene_node_t * node;
 
     node = SCENE_NewNode(name, type);
@@ -101,4 +105,23 @@ void SCENE_FreeNode(scene_node_t * node) {
     }
 
     free(node->child);
+}
+
+void SCENE_DumpNode(scene_node_t * node, unsigned int level) {
+    unsigned int i, j;
+    i = level;
+    while (i--)
+        putchar(' ');
+
+    printf("Node '%s' ", node->name);
+    printf("is of type %d and has %d children\n", node->type, node->num_children);
+
+    for (j = 0; j < node->num_children; j++) {
+        i = level;
+        while (i--)
+            putchar(' ');
+
+        printf("Child %d:\n", j);
+        SCENE_DumpNode(node->child[j], level + 1);
+    }
 }

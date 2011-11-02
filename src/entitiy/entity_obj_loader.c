@@ -55,7 +55,17 @@ typedef struct obj_mesh_t {
 } obj_mesh_t;
 
 static void OBJ_ReadMesh(obj_mesh_t *mesh) {
+    char * meshName;
+    meshName = NULL;
+    mesh->name = NULL;
 
+    /* Should set the name but maybe not included */
+    if (LE_IsAtEndOfLine() == 0) {
+        LE_readUntilEndOfLineToken();
+        meshName = LE_getCurrentToken();
+        mesh->name = (char *) malloc(sizeof(char) * (1 + strlen(meshName)));
+        strcpy(mesh->name, meshName);
+    }
 }
 
 static void OBJ_LoadMaterial(obj_mesh_t * mesh) {
@@ -248,6 +258,10 @@ static obj_mesh_t * OBJ_FreeAndReturnNext(obj_mesh_t * mesh) {
         texcoord = texcoordNext;
     }
 
+    if (mesh->name) {
+        free(mesh->name);
+    }
+
     free(mesh);
     return next;
 }
@@ -280,7 +294,6 @@ BOOL OBJ_LoadOBJ(filehandle_t * file, scene_node_t * rootNode) {
             }
 
             memset(mesh, 0, sizeof(obj_mesh_t));
-            /* Should set the name but maybe not included */
 
             OBJ_ReadMesh(mesh);
             num_mesh++;

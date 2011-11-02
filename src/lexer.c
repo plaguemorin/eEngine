@@ -63,6 +63,10 @@ void LE_SkipRestOfLine(void) {
     }
 }
 
+int LE_IsAtEndOfLine(void) {
+    return (*fileParsed.ptrCurrent == '\n' || *fileParsed.ptrCurrent == '\r') ? 1 : 0;
+}
+
 int prtCurrentIsWhiteChar(void) {
     return whiteCharacters[*fileParsed.ptrCurrent];
 }
@@ -70,7 +74,7 @@ int prtCurrentIsWhiteChar(void) {
 void LE_init(filehandle_t* textFile) {
     fileParsed = *textFile;
 
-    if (token == NULL) token = tokensStack[0];
+    if (token == NULL ) token = tokensStack[0];
 
     tokenChar = token;
 
@@ -130,6 +134,34 @@ void LE_skipWhiteSpace(void) {
             }
         }
     }
+}
+
+char * LE_readUntilEndOfLineToken(void) {
+    LE_skipWhiteSpace();
+
+    tokenChar = token;
+    *tokenChar = '\0';
+
+    if (*fileParsed.ptrCurrent == '"') {
+        *tokenChar++ = *fileParsed.ptrCurrent++;
+        while (LE_hasMoreData() && *fileParsed.ptrCurrent != '"') {
+            //          previousChar = *fileParsed.ptrCurrent;
+            *tokenChar++ = *fileParsed.ptrCurrent++;
+        }
+
+        fileParsed.ptrCurrent++;
+
+        *tokenChar++ = '"';
+        *tokenChar++ = '\0';
+        return token;
+    } else {
+        while (LE_hasMoreData() && !LE_IsAtEndOfLine())
+            *tokenChar++ = *fileParsed.ptrCurrent++;
+    }
+
+    *tokenChar++ = '\0';
+
+    return token;
 }
 
 char* LE_readToken(void) {

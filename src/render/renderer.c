@@ -14,6 +14,7 @@
 #include "global.h"
 #include "3d_math.h"
 #include "engine.h"
+#include "scene_node.h"
 #include "renderer.h"
 
 unsigned int frames = 0;
@@ -155,6 +156,25 @@ BOOL REN_MakeTextureAvailable(texture_t * tex) {
     }
 
     return NO;
+}
+
+BOOL REN_MakeNodeAvailable(scene_node_t * node) {
+    unsigned int i;
+
+    if (node->type == NODE_TYPE_STATIC_MESH) {
+        if (!REN_MakeObjectAvailable(node->object.mesh)) {
+            printf("Failed to make node '%s' available !\n", node->name);
+            return FALSE;
+        }
+    }
+
+    for (i = 0; i < node->num_children; i++) {
+        if (!REN_MakeNodeAvailable(node->child[i])) {
+            return FALSE;
+        }
+    }
+
+    return TRUE;
 }
 
 static void render_render_matrix(scene_node_t * object, matrix_t mat) {

@@ -9,6 +9,6 @@ BOOL ENTITY_Init();
 BOOL ENTITY_Update();
 BOOL ENTITY_Destroy();
 
-scene_node_t * ENTITY_LoadObject(const char * path);
+BOOL ENTITY_LoadObject(const char * path, scene_node_t * top);
 
 #endif

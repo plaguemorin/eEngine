@@ -23,108 +23,168 @@
 
 #include "script_priv.h"
 
-static int node_move(lua_State *L) {
-    scene_node_t * p;
+#define SCENE_NODE "scene_node_t"
+
+static scene_node_t *toscenenode(lua_State *L, int index) {
+    scene_node_t *bar;
+    bar = (scene_node_t *) lua_touserdata(L, index);
+    if (bar == NULL) luaL_typerror(L, index, SCENE_NODE);
+    return bar;
+}
+
+static scene_node_t *checkscenenode(lua_State *L, int index) {
+    scene_node_t *bar;
+    luaL_checktype(L, index, LUA_TUSERDATA);
+    bar = (scene_node_t *) luaL_checkudata(L, index, SCENE_NODE);
+    if (bar == NULL ) luaL_typerror(L, index, SCENE_NODE);
+    return bar;
+}
+
+static scene_node_t *pushscenenode(lua_State *L) {
+    scene_node_t *bar;
+    bar = (scene_node_t *) lua_newuserdata(L, sizeof(scene_node_t));
+    luaL_getmetatable(L, SCENE_NODE);
+    lua_setmetatable(L, -2);
+    return bar;
+}
+
+static int SceneNode_New(lua_State *L) {
+    const char * x;
+    scene_node_t *bar;
+
+    x = luaL_optlstring(L, 1, NULL, NULL);
+    bar = pushscenenode(L);
+
+    SCENE_InitializeNode(bar, x, NODE_TYPE_DUMMY);
+    return 1;
+}
+
+static int SceneNode_LoadMesh(lua_State *L) {
+    const char * meshName;
+    BOOL result;
+    scene_node_t *self;
+
+    self = checkscenenode(L, 1);
+    meshName = luaL_checklstring(L, 2, NULL);
+
+    result = ENTITY_LoadObject(meshName, self);
+    if (result) {
+        result = REN_MakeNodeAvailable(self);
+    }
+
+    lua_pushboolean(L, result);
+    return 1;
+}
+
+static int SceneNode_Attach(lua_State * L) {
+    scene_node_t * self;
+    scene_node_t * parent;
+
+    self = checkscenenode(L, 1);
+
+    if (lua_isnil(L, 2)) {
+        parent = engine->world->root_node;
+    } else {
+        parent = checkscenenode(L, 2);
+    }
+
+    SCENE_AttachNodeAsChildOf(parent, self);
+    return 0;
+}
+
+static int SceneNode_Move(lua_State * L) {
+    scene_node_t * self;
     float x, y, z;
-    int argc;
 
-    argc = lua_gettop(L);
+    self = checkscenenode(L, 1);
+    x = luaL_checknumber(L, 2);
+    y = luaL_checknumber(L, 3);
+    z = luaL_checknumber(L, 4);
 
-    if (argc != 4) {
-        printf("method move_entity takes 4 parameters: <entity>, <x>, <y>, <z>\n");
-        return 0;
-    }
-
-    if (lua_isuserdata(L, -4)) {
-        p = lua_touserdata(L, -4);
-    } else {
-        printf("[SCRIPT] node_move: Well, param 1 was not a user data\n");
-        return 0;
-    }
-
-    if (lua_isnumber(L, -1) && lua_isnumber(L, -2) && lua_isnumber(L, -3)) {
-        z = lua_tonumber(L, -1);
-        y = lua_tonumber(L, -2);
-        x = lua_tonumber(L, -3);
-
-        vectorSet(p->position, x, y, z);
-    }
-
+    vectorSet(self->position, x, y, z);
     return 0;
 }
 
-static int node_rotate(lua_State * L) {
-    scene_node_t * p;
+static int SceneNode_Rotate(lua_State * L) {
+    scene_node_t * self;
     float x, y, z;
-    int argc = lua_gettop(L);
 
-    if (argc != 4) {
-        printf("method entity_rotate takes 4 parameters: <entity>, <rot_x>, <rot_y>, <rot_z>\n");
-        return 0;
-    }
+    self = checkscenenode(L, 1);
+    x = luaL_checknumber(L, 2);
+    y = luaL_checknumber(L, 3);
+    z = luaL_checknumber(L, 4);
 
-    if (lua_isuserdata(L, -4)) {
-        p = lua_touserdata(L, -4);
-    } else {
-        printf("[SCRIPT] node_rotate: Well, param 1 was not a user data\n");
-        return 0;
-    }
-
-    if (lua_isnumber(L, -1) && lua_isnumber(L, -2) && lua_isnumber(L, -3)) {
-        z = lua_tonumber(L, -1);
-        y = lua_tonumber(L, -2);
-        x = lua_tonumber(L, -3);
-
-        vectorSet(p->rotation, x, y, z);
-    }
-
+    vectorSet(self->rotation, x, y, z);
     return 0;
 }
 
-static int node_addmesh(lua_State * L) {
-    size_t size;
+static int SceneNode_Dump(lua_State * L) {
+    scene_node_t * self;
+    self = checkscenenode(L, 1);
 
-    luaL_checklstring(L, 1, &size);
-
-
+    SCENE_DumpNode(self, 0);
     return 0;
 }
 
-static int node_dummy(lua_State * L) {
-    scene_node_t * node;
-    size_t strSize;
-    const char * name;
-
-    if (!lua_isnil(L, 1)) {
-        name = luaL_checklstring(L, 1, &strSize);
-    } else {
-        name = NULL;
-    }
-
-    node = SCENE_NewNode(name, NODE_TYPE_DUMMY);
-
+static int SceneNode__gc(lua_State *L) {
+    printf("Trashing node %p\n", checkscenenode(L, 1));
     return 0;
 }
-
-static int node_test(lua_State *L) {
-    size_t size;
-    int a,b,c;
-    const char * string;
-
-    string = luaL_checklstring(L, 1, &size);
-    a = luaL_checkinteger(L, 2);
-    b = luaL_checkinteger(L, 3);
-    c = luaL_checkinteger(L, 4);
-
-    printf("test(\"%s\", %d, %d, %d);\n", string, a, b, c);
-
-    return 0;
+static int SceneNode__tostring(lua_State *L) {
+    char buff[32];
+    sprintf(buff, "%p", toscenenode(L, 1));
+    lua_pushfstring(L, "SceneNode (%s)", buff);
+    return 1;
 }
 
-static const luaL_Reg entityLib[] = { {"test", node_test}, { "move", node_move }, { "rotate", node_rotate }, { "addNodeMesh", node_addmesh }, { "addNodeDummy", node_dummy }, { NULL, NULL } };
+static const luaL_Reg entityMethodsLib[] = {
+/* New Dummy Node */
+{ "new", SceneNode_New },
+/* New Mesh node */
+{ "loadMesh", SceneNode_LoadMesh },
+/* Attach node to another node */
+{ "attachTo", SceneNode_Attach },
+/* Move a node */
+{ "move", SceneNode_Move },
+/* Rotate a node */
+{ "rotate", SceneNode_Rotate },
+/* Debug */
+{ "dump", SceneNode_Dump },
+/* end */
+{ NULL, NULL } };
+
+static const luaL_Reg entityMetaLib[] = { { "__gc", SceneNode__gc }, { "__tostring", SceneNode__tostring }, { NULL, NULL } };
 
 int luaopen_dengine_world(lua_State *L) {
-    luaL_register(L, "world", entityLib);
+    /* create methods table, add it to the globals */
+    luaL_openlib(L, SCENE_NODE, entityMethodsLib, 0);
 
-    return 0;
+    /* create metatable for SCENE_NODE, and add it to the Lua registry */
+    luaL_newmetatable(L, SCENE_NODE);
+
+    /* fill metatable */
+    luaL_openlib(L, 0, entityMetaLib, 0);
+    lua_pushliteral(L, "__index");
+
+    /* dup methods table*/
+    lua_pushvalue(L, -3);
+
+    /* metatable.__index = methods */
+    lua_rawset(L, -3);
+
+    /* dup methods table*/
+    lua_pushliteral(L, "__metatable");
+
+    /* hide metatable:     metatable.__metatable = methods */
+    lua_pushvalue(L, -3);
+
+    /* drop metatable */
+    lua_rawset(L, -3);
+
+    /* return methods on the stack */
+    lua_pop(L, 1);
+
+    /* After SCENE_NODE register the methods are still on the stack, remove them. */
+    lua_pop(L, 1);
+    return 1;
 }

@@ -4,8 +4,8 @@ function q()
 end
 
 function update()
-    world.rotate(root, rotA, rot, 0)
-    world.move(root, 0, -30.0, posX)
+    root:rotate(rotA, rot, 0)
+    root:move(0, -30.0, posX)
 end
 
 function rotateLeft()
@@ -43,18 +43,26 @@ function playerEnd(entity, marker)
     -- world.disable(entity)
 end
 
-world.test("allo", 1, 2, 3)
-
 rot = 0.0
 rotA = 1.57079633
 posX = -50.0
 
-root = world.addNodeDummy()
+-- for n,v in pairs(scene_node_t) do print(n,v) end
 
-obj = world.addNodeMesh(root, "data/models/altair/altair.obj")
+-- root = world.addNodeDummy()
+root = scene_node_t.new("Dummy Node")
+obj = scene_node_t.new("Altair")
+
+obj:loadMesh("data/models/altair/altair.obj")
+obj:attachTo(root)
+root:attachTo(nil)
+
+-- root:dump()
+
+-- obj = world.addNodeMesh("data/models/altair/altair.obj", root)
 -- data/models/bob/boblampclean.md5mesh
 
-world.rotate(obj, rotA, rotA * 2.0, 0)
+-- world.rotate(obj, rotA, rotA * 2.0, 0)
 
 -- world.load("basic")
 -- camera.set3D()

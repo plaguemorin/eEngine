@@ -13,6 +13,7 @@ BOOL RENDERER_Destroy();
 
 void REN_Update(float);
 void REN_HostFrame();
+BOOL REN_MakeNodeAvailable(scene_node_t *);
 BOOL REN_MakeObjectAvailable(mesh_t *);
 BOOL REN_MakeTextureAvailable(texture_t *);
 

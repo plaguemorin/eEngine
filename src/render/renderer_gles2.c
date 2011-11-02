@@ -25,7 +25,7 @@
 #include "engine.h"
 #include "filesystem.h"
 
-#undef GL_DEBUG_RENDER
+#define GL_DEBUG_RENDER
 
 #ifdef GL_DEBUG_RENDER
 #define glCheckErrors(a)		engine->isRunning = CheckErrorsF(__PRETTY_FUNCTION__, a)
@@ -575,6 +575,7 @@ static BOOL registerObject(mesh_t * object) {
         printf("[GLES2] Unable to allocate memory for object data\n");
         return NO;
     }
+    memset(objData, 0, sizeof(renderer_prog_object_t));
 
     object->renderer_data = objData;
     objData->memory_location = OBJECT_MEMLOC_VRAM;

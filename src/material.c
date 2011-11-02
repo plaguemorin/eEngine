@@ -22,7 +22,6 @@ void MAT_Init() {
 
 material_t * MAT_LoadMaterial(const char * name) {
     material_t * mat;
-    printf("[MAT] Loading %s\n", name);
 
     if (!strcmp("png", name) || !strcmp("tga", name)) {
 
