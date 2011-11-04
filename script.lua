@@ -45,7 +45,7 @@ end
 
 rot = 0.0
 rotA = 1.57079633
-posX = -50.0
+posX = 50.0
 
 -- for n,v in pairs(scene_node_t) do print(n,v) end
 
@@ -57,6 +57,8 @@ obj:loadMesh("data/models/altair/altair.obj")
 obj:attachTo(root)
 root:attachTo(nil)
 
+l = root:child("Torso Hood head eyes")
+l:dump()
 -- root:dump()
 
 -- obj = world.addNodeMesh("data/models/altair/altair.obj", root)

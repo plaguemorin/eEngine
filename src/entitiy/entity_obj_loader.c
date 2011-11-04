@@ -223,6 +223,7 @@ static void OBJ_Convert(obj_mesh_t * mesh, mesh_t * object, unsigned int prev_nu
         object->indices[i + 2] = face->v[2] - 1 - prev_num_vert;
     }
 
+    object->material = NULL;
 }
 
 static obj_mesh_t * OBJ_FreeAndReturnNext(obj_mesh_t * mesh) {

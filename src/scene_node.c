@@ -26,10 +26,9 @@ void SCENE_InitializeNode(scene_node_t * new_scene_node, const char * name, scen
     }
 
     new_scene_node->type = type;
-    switch (new_scene_node->type) {
-        case NODE_TYPE_STATIC_MESH:
-            new_scene_node->object.mesh = (mesh_t *) malloc(sizeof(mesh_t));
-            break;
+    if (new_scene_node->type == NODE_TYPE_STATIC_MESH) {
+        new_scene_node->object.mesh = (mesh_t *) malloc(sizeof(mesh_t));
+        memset(new_scene_node->object.mesh, 0, sizeof(mesh_t));
     }
 }
 
@@ -42,7 +41,7 @@ scene_node_t * SCENE_NewNode(const char * name, scene_node_type_t type) {
         SCENE_InitializeNode(new_scene_node, name, type);
     } else {
         /* CRASH */
-
+        printf("CRASH\n");
     }
 
     return new_scene_node;

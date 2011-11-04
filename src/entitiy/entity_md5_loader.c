@@ -101,15 +101,16 @@ BOOL MD5_LoadMD5(filehandle_t * file, scene_node_t * entity) {
     return TRUE;
 }
 
-static void MD5_ReadMesh(scene_node_t * node, unsigned int objNum, object_joint_t * joints) {
+static void MD5_ReadMesh(scene_node_t * parent, unsigned int objNum, object_joint_t * joints) {
     mesh_t * mesh;
     md5_vertex_t * vertex;
     md5_weight_t * weight;
+    scene_node_t * node;
     int j, numWeight, maxWeightPerVertex;
 
     maxWeightPerVertex = 0;
+    node = SCENE_NewNodeWithParent(parent, NULL, NODE_TYPE_STATIC_MESH);
     mesh = node->object.mesh;
-    memset(mesh, 0, sizeof(mesh_t));
     LE_readToken(); /* { */
 
     while (strcmp("}", LE_getCurrentToken())) {
@@ -166,7 +167,7 @@ static void MD5_ReadMesh(scene_node_t * node, unsigned int objNum, object_joint_
             j = LE_readReal() * 3; /* ID */
 
             if (j < mesh->num_indices) {
-                mesh->indices[j] = LE_readReal();
+                mesh->indices[j + 0] = LE_readReal();
                 mesh->indices[j + 1] = LE_readReal();
                 mesh->indices[j + 2] = LE_readReal();
             }

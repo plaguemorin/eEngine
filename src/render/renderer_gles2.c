@@ -51,6 +51,7 @@ typedef struct simple_shader_var_t {
 } shader_var_t;
 
 typedef struct simple_shader_t {
+    char magic[4];
     GLuint prog;
 
     GLuint num_vars;
@@ -58,6 +59,7 @@ typedef struct simple_shader_t {
 } shader_prog_t;
 
 typedef struct renderer_prog_object_t {
+    char magic[4];
     GLuint vertexVboId;
     GLuint indiciesVboId;
     prog_location memory_location;
@@ -83,7 +85,6 @@ static shader_prog_t * currentShader;
 typedef struct renderer_prog_texture_t {
     GLuint texId;
 } renderer_prog_texture_t;
-
 
 GLuint shadowFBOId;
 GLuint shadowMapTextureId;
@@ -472,22 +473,22 @@ static BOOL init(int w, int h) {
     glClearColor(0.0f, 0.0f, 0.5f, 1.0f);
     //glEnable(GL_DEPTH_TEST);
     /*
-    glEnable(GL_DEPTH_TEST);
-    glDepthFunc(GL_LEQUAL);
-    glDepthMask(TRUE);
-    glDisable(GL_STENCIL_TEST);
-    glStencilMask(0xFFFFFFFF);
-    glStencilFunc(GL_EQUAL, 0x00000000, 0x00000001);
-    glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
-    glFrontFace(GL_CCW);
-    glCullFace(GL_BACK);
-    glEnable(GL_CULL_FACE);
-    glClearColor(0.0, 0.0, 0.0, 0.0);
-    glClearStencil(0);
-    glDisable(GL_BLEND);
-    glDisable(GL_DITHER);
-    glActiveTexture(GL_TEXTURE0);
-    */
+     glEnable(GL_DEPTH_TEST);
+     glDepthFunc(GL_LEQUAL);
+     glDepthMask(TRUE);
+     glDisable(GL_STENCIL_TEST);
+     glStencilMask(0xFFFFFFFF);
+     glStencilFunc(GL_EQUAL, 0x00000000, 0x00000001);
+     glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+     glFrontFace(GL_CCW);
+     glCullFace(GL_BACK);
+     glEnable(GL_CULL_FACE);
+     glClearColor(0.0, 0.0, 0.0, 0.0);
+     glClearStencil(0);
+     glDisable(GL_BLEND);
+     glDisable(GL_DITHER);
+     glActiveTexture(GL_TEXTURE0);
+     */
 
     defaultObjectShader = (shader_prog_t *) malloc(sizeof(shader_prog_t));
     if (defaultObjectShader) {
@@ -498,34 +499,34 @@ static BOOL init(int w, int h) {
     if (textObjectShader) {
         LoadProgram(textObjectShader, "data/shaders/v_text.glsl", "data/shaders/f_text.glsl");
     }
-/*
-    GLuint   depthRenderbuffer;
+    /*
+     GLuint   depthRenderbuffer;
 
-    glGenFramebuffers(1, &shadowFBOId);
-    glBindFramebuffer(GL_FRAMEBUFFER, shadowFBOId);
+     glGenFramebuffers(1, &shadowFBOId);
+     glBindFramebuffer(GL_FRAMEBUFFER, shadowFBOId);
 
-    glGenTextures(1, &shadowMapTextureId);
-    glBindTexture(GL_TEXTURE_2D, shadowMapTextureId);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, tWidth, tHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, shadowMapTextureId,0);
-    glBindTexture(GL_TEXTURE_2D, -1);
+     glGenTextures(1, &shadowMapTextureId);
+     glBindTexture(GL_TEXTURE_2D, shadowMapTextureId);
+     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, tWidth, tHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, shadowMapTextureId,0);
+     glBindTexture(GL_TEXTURE_2D, -1);
 
-    glGenRenderbuffers(1, &depthRenderbuffer);
-    SCR_CheckErrorsF("CreateFBOandShadowMap", "glGenRenderbuffers");
+     glGenRenderbuffers(1, &depthRenderbuffer);
+     SCR_CheckErrorsF("CreateFBOandShadowMap", "glGenRenderbuffers");
 
-    glBindRenderbuffer(GL_RENDERBUFFER, depthRenderbuffer);
-    SCR_CheckErrorsF("CreateFBOandShadowMap", "glBindRenderbuffer");
+     glBindRenderbuffer(GL_RENDERBUFFER, depthRenderbuffer);
+     SCR_CheckErrorsF("CreateFBOandShadowMap", "glBindRenderbuffer");
 
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT16, tWidth, tHeight);
-    SCR_CheckErrorsF("CreateFBOandShadowMap", "glRenderbufferStorage");
+     glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT16, tWidth, tHeight);
+     SCR_CheckErrorsF("CreateFBOandShadowMap", "glRenderbufferStorage");
 
-    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthRenderbuffer);
-    SCR_CheckErrorsF("CreateFBOandShadowMap", "glFramebufferRenderbuffer");
-    */
+     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthRenderbuffer);
+     SCR_CheckErrorsF("CreateFBOandShadowMap", "glFramebufferRenderbuffer");
+     */
     if (!CheckErrorsF("init", "no details")) {
         engine->isRunning = NO;
     }
@@ -578,8 +579,16 @@ static BOOL registerObject(mesh_t * object) {
     memset(objData, 0, sizeof(renderer_prog_object_t));
 
     object->renderer_data = objData;
+    objData->magic[0] = 'M';
+    objData->magic[1] = 'A';
+    objData->magic[2] = 'G';
+    objData->magic[3] = 'Z';
     objData->memory_location = OBJECT_MEMLOC_VRAM;
     objData->shader = defaultObjectShader;
+    objData->shader->magic[0] = 'M';
+    objData->shader->magic[1] = 'A';
+    objData->shader->magic[2] = 'G';
+    objData->shader->magic[3] = 'I';
 
     glGenBuffers(1, &objData->vertexVboId);
     glGenBuffers(1, &objData->indiciesVboId);
